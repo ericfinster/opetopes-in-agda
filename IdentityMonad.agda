@@ -30,10 +30,13 @@ module IdentityMonad where
             f-g = λ { tt → idp } } } ; 
       τ-coh = λ { i x p → idp } }
 
-    -- idM : PolyMonad I
-    -- idM = record { 
-    --   P = Id I ; 
-    --   η = id-η ; 
-    --   μ = id-μ }
-
+    idM : PolyMonad I
+    idM = record
+            { P = IdP I
+            ; η = id-η
+            ; μ = id-μ
+            ; unit-leaf-law = λ { tt → idp }
+            ; unit-root-law = λ { tt → idp }
+            ; assoc-law = λ { (tt , φ) → idp }
+            }
 
