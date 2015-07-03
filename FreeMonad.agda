@@ -36,24 +36,24 @@ module FreeMonad where
       node i (c , (λ p₀ → fm-graft (τ P ((i , c) , p₀)) (φ p₀ , (λ p₁ → ψ (p₀ , p₁)))))
 
     {-# TERMINATING #-}
-    fm-grafting-eqv : (i : I) (c : γ (FmP ⊚ FmP) i) → ρ (FmP ⊚ FmP) (i , c) ≃ ρ FmP (i , fm-graft i c)
-    fm-grafting-eqv i (leaf .i , ψ) = Σ-eqv-base (ρ FmP (i , (ψ tt)))
-    fm-grafting-eqv i (node .i (c , φ) , ψ) = 
-      Σ-eqv-inv (ρ P (i , c)) _ _ (λ p → fm-grafting-eqv (τ P ((i , c) , p)) (φ p , (λ p₀ → ψ (p , p₀)))) ⊙ (Σ-eqv-lift _ _ _)
+    fm-place-eqv : (i : I) (c : γ (FmP ⊚ FmP) i) → ρ (FmP ⊚ FmP) (i , c) ≃ ρ FmP (i , fm-graft i c)
+    fm-place-eqv i (leaf .i , ψ) = Σ-eqv-base (ρ FmP (i , (ψ tt)))
+    fm-place-eqv i (node .i (c , φ) , ψ) = 
+      Σ-eqv-inv (ρ P (i , c)) _ _ (λ p → fm-place-eqv (τ P ((i , c) , p)) (φ p , (λ p₀ → ψ (p , p₀)))) ⊙ (Σ-eqv-lift _ _ _)
 
     {-# TERMINATING #-}
     fm-type-coh : (i : I) (c : γ (FmP ⊚ FmP) i) (p : ρ (FmP ⊚ FmP) (i , c)) →
                   τ (FmP ⊚ FmP) ((i , c) , p) ==
-                  τ FmP ((i , fm-graft i c) , f (fm-grafting-eqv i c) p)
+                  τ FmP ((i , fm-graft i c) , f (fm-place-eqv i c) p)
     fm-type-coh i (leaf .i , ψ) (p₀ , p₁) = idp
     fm-type-coh i (node .i (c , φ) , ψ) ((p , l₀) , l₁) = 
       leafType l₁ =⟨ fm-type-coh (τ P ((i , c) , p)) (φ p , (λ p₀ → ψ (p , p₀))) (l₀ , l₁)  ⟩ 
-      leafType (f (fm-grafting-eqv (τ P ((i , c) , p)) (φ p , (λ p₀ → ψ (p , p₀)))) (l₀ , l₁)) ∎
+      leafType (f (fm-place-eqv (τ P ((i , c) , p)) (φ p , (λ p₀ → ψ (p , p₀)))) (l₀ , l₁)) ∎
   
     fm-μ : FmP ⊚ FmP ⇛ FmP
     fm-μ = record { 
              γ-map = fm-graft ; 
-             ρ-eqv = fm-grafting-eqv ; 
+             ρ-eqv = fm-place-eqv ; 
              τ-coh = fm-type-coh 
            }
 
@@ -79,10 +79,11 @@ module FreeMonad where
       d : γ (FmP ⊚ FmP) _
       d = (φ p₀ , (λ p₁ → proj₁ (ψ (p₀ , p₁))))
         
-      main-lemma : transport (W P) (lift-place-coh {d = d} l) (proj₂ (ψ (p₀ , proj₁ (lift-place l))) (proj₂ (lift-place {d = d} l))) == 
-                   induced-decor (proj₂ (decor-assoc-right i (_ , ψ))) (p₀ , l) 
-                   -- transport (W P) (lift-place-coh (p₀ , l)) ((λ { (p₁ , p₂) → proj₂ (ψ p₁) p₂}) (lift-place (p₀ , l)))
-      main-lemma = {!!}
+      -- Anyone?
+      postulate
+        main-lemma : transport (W P) (lift-place-coh {d = d} l) (proj₂ (ψ (p₀ , proj₁ (lift-place l))) (proj₂ (lift-place {d = d} l))) == 
+                     induced-decor (proj₂ (decor-assoc-right i (_ , ψ))) (p₀ , l) 
+
 
     {-# TERMINATING #-}
     fm-assoc-law : {i : I} (c : γ (FmP ⊚ FmP ⊚ FmP) i) →
