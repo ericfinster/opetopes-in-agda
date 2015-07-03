@@ -49,18 +49,25 @@ module PolynomialMonad where
     mult-left : {i : I} → γ ((P ⊚ P) ⊚ P) i → γ (P ⊚ P) i
     mult-left (c , φ) = c , (λ p → mult (φ p) )
 
-    lift-place : {i : I} → (d : γ (P ⊚ P) i) → (p : ρ P (_ , mult d)) → ρ (P ⊚ P) (i , d)
-    lift-place d p = ρ-inv-map μ d p
+    lift-place : {i : I} → {d : γ (P ⊚ P) i} → (p : ρ P (_ , mult d)) → ρ (P ⊚ P) (i , d)
+    lift-place p = ρ-inv-map μ _ p
 
-    lift-place-coh : {i : I} → (d : γ (P ⊚ P) i) → (p : ρ P (_ , mult d)) → 
-                     τ (P ⊚ P) (_ , lift-place d p) == τ P (_ , p)
-    lift-place-coh d p = 
-      τ (P ⊚ P) (_ , lift-place d p)           =⟨ τ-coh μ _ d (lift-place d p) ⟩ 
-      τ P (_ ,  ρ-map μ d (lift-place d p))    =⟨ ρ-inv-right μ p |in-ctx (λ p₀ → τ P ((_ , mult d) , p₀)) ⟩ 
+    lift-place-coh : {i : I} → {d : γ (P ⊚ P) i} → (p : ρ P (_ , mult d)) → 
+                     τ (P ⊚ P) (_ , lift-place p) == τ P (_ , p)
+    lift-place-coh p = 
+      τ (P ⊚ P) (_ , lift-place p)           =⟨ τ-coh μ _ _ (lift-place p) ⟩ 
+      τ P (_ ,  ρ-map μ _ (lift-place p))    =⟨ ρ-inv-right μ p |in-ctx (λ p₀ → τ P (_ , p₀)) ⟩ 
       τ P (_ , p) ∎
 
+    -- This is possible not a good name.  What it says is that if you have a decoration on a two 
+    -- level tree, then you have a decoration of the constructor you obtain by multiplying down
+    -- the base tree.
+    induced-decor : {i : I} → {d : γ (P ⊚ P) i} → (ψ : (p : ρ (P ⊚ P) (i , d)) → γ P (τ (P ⊚ P) ((i , d) , p))) → 
+                                                    (p : ρ P (i , mult d)) → γ P (τ P ((i , mult d) , p))
+    induced-decor ψ p = transport (γ P) (lift-place-coh p) (ψ (lift-place p))
+
     mult-right : {i : I} → γ (P ⊚ (P ⊚ P)) i → γ (P ⊚ P) i
-    mult-right (d , ψ) = (mult d , (λ p → transport (γ P) (lift-place-coh d p) (ψ (lift-place d p))))
+    mult-right (d , ψ) = (mult d , induced-decor ψ)
 
     decor-assoc-right : (i : I) → γ ((P ⊚ P) ⊚ P) i → γ (P ⊚ (P ⊚ P)) i
     decor-assoc-right i (c , φ) = (c , (λ p → proj₁ (φ p))) , (λ { (p₀ , p₁) → proj₂ (φ p₀) p₁ })

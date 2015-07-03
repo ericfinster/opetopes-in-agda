@@ -168,3 +168,7 @@ module Prelude where
   {-# BUILTIN INFINITY ∞  #-}
   {-# BUILTIN SHARP    ♯_ #-}
   {-# BUILTIN FLAT     ♭  #-}
+
+  postulate
+
+    funext : {A : Set} {P : A → Set} → {f g : (a : A) → P a} → ((a : A) → f a == g a) → f == g
