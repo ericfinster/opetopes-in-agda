@@ -26,11 +26,14 @@ module PolynomialMonad where
     unit-type-coh : (i : I) → τ P (_ , unit-place-at i) == i
     unit-type-coh i = ! (τ-coh η i tt tt)
 
-    unit-place-type-coh : {i : I} → (p : ρ P (_ , unit-at i)) → τ P (_ , p) == τ P (_ , unit-place-at i)
-    unit-place-type-coh p = ap _ (unit-place-unique p)
+    unit-place-type-coh : {i : I} → (p : ρ P (_ , unit-at i)) → τ P (_ , p) == i 
+    unit-place-type-coh p = ap _ (unit-place-unique p) ∙ unit-type-coh _
   
+    unit-K : (i : I) → unit-type-coh i == unit-place-type-coh (unit-place-at i)
+    unit-K i = K (unit-type-coh i) (unit-place-type-coh (unit-place-at i))
+
     cons-to-unit-type : {i : I} → (p : ρ P (_ , unit-at i)) → γ P i → γ P (τ P (_ , p))
-    cons-to-unit-type p = transport! (γ P) (unit-place-type-coh p ∙ unit-type-coh _)
+    cons-to-unit-type p = transport! (γ P) (unit-place-type-coh p) 
 
     unit-leaf-decor : {i : I} → (c : γ P i) → γ (P ⊚ P) i
     unit-leaf-decor c = (c , λ p → unit-at _)

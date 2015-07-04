@@ -71,6 +71,10 @@ module Prelude where
     → (x == y → f x == f y)
   ap f idp = idp
 
+  ap-2 : ∀ {i j} {A : Set i} {B : Set j} (f : A → B) {x y : A} {p q : x == y} →
+         (p == q) → ap f p == ap f q
+  ap-2 f idp = idp
+
   coe : ∀ {i} {A B : Set i} (p : A == B) → A → B
   coe idp x = x
 
@@ -85,6 +89,14 @@ module Prelude where
     → (B y → B x)
   transport! B p = coe! (ap B p)
 
+  transport-coh : ∀ {i j} {A : Set i} (B : A → Set j) {x y : A} {p q : x == y} → 
+                  (α : p == q) → (e : B x) → transport B p e == transport B q e
+  transport-coh B idp e = idp
+
+  transport!-coh : ∀ {i j} {A : Set i} (B : A → Set j) {x y : A} {p q : x == y} → 
+                   (α : p == q) → (f : B y) → transport! B p f == transport! B q f
+  transport!-coh B idp f = idp
+
   infixr 8 _∙_
 
   _∙_ : ∀ {i} → {A : Set i} → {x y z : A}
@@ -94,11 +106,14 @@ module Prelude where
   ! : ∀ {i} → {A : Set i} → {x y : A} → (x == y → y == x)
   ! idp = idp
 
-  has-all-paths : (A : Set) → Set
+  has-all-paths : Set → Set
   has-all-paths A = (x y : A) → x == y
 
   unit-has-all-paths : has-all-paths ⊤
   unit-has-all-paths tt tt = idp
+
+  K : {A : Set} {x y : A} (p q : x == y) → p == q
+  K idp idp = idp
 
   record _≃_ (A B : Set) : Set where
 
@@ -117,6 +132,14 @@ module Prelude where
                  g-f = λ a → idp ; 
                  f-g = λ a → idp 
                }
+
+  Σ-transport : {A : Set} → {P : A → Set} → {a b : A} → {x : P a} → 
+                (p : a == b) → (a , x) == (b , transport P p x)
+  Σ-transport idp = idp
+
+  Σ-transport! : {A : Set} → {P : A → Set} → {a b : A} → {y : P b} → 
+                 (p : a == b) → (b , y) == (a , transport! P p y)
+  Σ-transport! idp = idp
 
   Σ-eqv-base : (A : Set) → (Σ[ u ∈ ⊤ ] A) ≃ A
   Σ-eqv-base A = record { 

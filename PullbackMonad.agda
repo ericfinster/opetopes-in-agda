@@ -12,32 +12,63 @@ module PullbackMonad where
 
   module Pullback (I : Set) (X : I → Set) (M : PolyMonad I) where
   
+    open PolyMonad 
     open Poly
-    open PolyMonad M
     open _⇛_
+
+    PM : Poly I I
+    PM = P M
+
+    ηM : IdP I ⇛ PM
+    ηM = η M
+
+    μM : PM ⊚ PM ⇛ PM
+    μM = μ M
 
     J : Set
     J = Σ I X
 
     PbP : Poly J J
     PbP = record { 
-      γ = λ { (i , x) → ⟦ P ⟧ X i } ; 
-      ρ = λ { ((i , x) , (c , φ)) → ρ P (i , c) } ; 
-      τ = λ { (((i , x) , c , φ) , p) → (τ P ((i , c) , p)) , (φ p) } }
+      γ = λ { (i , x) → ⟦ PM ⟧ X i } ; 
+      ρ = λ { ((i , x) , (c , φ)) → ρ PM (i , c) } ; 
+      τ = λ { (((i , x) , c , φ) , p) → (τ PM ((i , c) , p)) , (φ p) } }
 
     pb-η : IdP J ⇛ PbP
     pb-η = record { 
-      γ-map = λ { (i , x) tt → (γ-map η i tt , (λ p → transport! X {!unit-type-coh i!} x)) } ; 
+      γ-map = λ { (i , x) tt → unit-cons i x } ; 
+      ρ-eqv = λ { (i , x) tt → ρ-eqv ηM i tt } ; 
+      τ-coh = λ { (i , x) tt tt → type-coh i x } }
+
+      where open UnitLemmas PM ηM
+
+            unit-cons : (i : I) (x : X i) → γ PbP (i , x)
+            unit-cons i x = (unit-at i , (λ p → transport! X (unit-place-type-coh p) x))
+
+            -- should be provable without K, but I doubt the multiplication case will be ...
+            type-coh : (i : I) (x : X i) → (i , x) == τ PbP (((i , x) , unit-cons i x) , unit-place-at i)
+            type-coh i x = 
+              (i , x) =⟨ Σ-transport! (unit-type-coh i) ⟩ 
+              (τ PM ((i , unit-at i) , unit-place-at i) , transport! X (unit-type-coh i) x) 
+                =⟨ transport!-coh X (unit-K i) x |in-ctx (λ x₀ → (τ PM ((i , unit-at i) , unit-place-at i) , x₀)) ⟩ 
+              (τ PM ((i , unit-at i) , unit-place-at i) , transport! X (unit-place-type-coh (unit-place-at i)) x) =⟨ idp ⟩ 
+              τ PbP (((i , x) , unit-cons i x) , ρ-map ηM tt tt) ∎ 
+
+    module _ where
+
+      open AssocLemmas PM μM
+
+      pb-mult : (j : J) → γ (PbP ⊚ PbP) j → γ PbP j
+      pb-mult (i , x) ((c , φ) , ψ) = {!mult!}
+
+    pb-μ : PbP ⊚ PbP ⇛ PbP
+    pb-μ = record { 
+      γ-map = pb-mult ; 
       ρ-eqv = {!!} ; 
       τ-coh = {!!} }
 
-      where open UnitLemmas P η
-
-    pb-μ : PbP ⊚ PbP ⇛ PbP
-    pb-μ = {!!}
-
-    open UnitLemmas {J} PbP pb-η
-    open AssocLemmas {J} PbP pb-μ
+    open UnitLemmas PbP pb-η
+    open AssocLemmas PbP pb-μ
 
     postulate
 
