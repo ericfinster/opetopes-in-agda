@@ -59,7 +59,7 @@ module PullbackMonad where
       open AssocLemmas PM μM
 
       pb-mult : (j : J) → γ (PbP ⊚ PbP) j → γ PbP j
-      pb-mult (i , x) ((c , φ) , ψ) = {!mult!}
+      pb-mult (i , x) ((c , φ) , ψ) = (mult (c , (λ p → proj₁ (ψ p)))) , (λ p → {!φ (proj₁ (lift-place p))!})
 
     pb-μ : PbP ⊚ PbP ⇛ PbP
     pb-μ = record { 

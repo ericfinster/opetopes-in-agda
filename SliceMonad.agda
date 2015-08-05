@@ -14,14 +14,11 @@ module SliceMonad where
   module SliceM {I : Set} (M : PolyMonad I) where
 
     open PolyMonad M renaming (η to ηM ; μ to μM)
+    open CollapseLemmas M
     open FreeMonad
     open Poly
     open _⇛_
     open _≃_
-
-    collapse : {i : I} → W P i → γ P i
-    collapse (leaf i) = γ-map ηM i tt 
-    collapse (node i (c , φ)) = γ-map μM i (c , (λ p → collapse (φ p)))
 
     B : Set
     B = Σ I (γ P)
@@ -46,32 +43,53 @@ module SliceMonad where
       ρ-eqv = λ { (i , c) tt → corolla-has-one-node c } ; 
       τ-coh = λ { (i , c) tt tt → idp } }
 
+    {-# TERMINATING #-}
     sm-graft : (b : B) → γ (SmP ⊚ SmP) b → γ SmP b
     sm-graft (i , ._) ((leaf .i , idp) , _) = γ-map sm-η (i , _) tt
     sm-graft (i , ._) ((node .i (c , Φ) , idp) , Ψ) = 
-      fm-graft i (localTree , newDecor) , {!proj₂ (Ψ (inj₁ tt))!}  
+      fm-graft i (localTree , λ l → proj₁ (IH l)) , {!!}  
 
       where open FreeM I P
             open AssocLemmas FmP fm-μ
 
+            localCons : γ SmP (i , c)
+            localCons = (Ψ (inj₁ tt))
+
             localTree : W P i
-            localTree = proj₁ (Ψ (inj₁ tt))
+            localTree = proj₁ localCons
 
             localEv : collapse localTree == c
-            localEv = proj₂ (Ψ (inj₁ tt))
+            localEv = proj₂ localCons
   
             resultLeaf : leafOf localTree → ρ P (i , c)
-            resultLeaf l = {!!}
+            resultLeaf l = transport (ρ P) (ap (λ c₀ → (i , c₀)) localEv) (collapse-leaf localTree l) 
 
             leafCoh : (l : leafOf localTree) → leafType l == τ P ((i , c) , resultLeaf l)
             leafCoh l = {!!}
 
-            newDecor : (l : leafOf localTree) → γ FmP (τ FmP ((i , localTree), l))
-            newDecor l = proj₁ (sm-graft (leafType l , transport! (γ P) (leafCoh l) (collapse (Φ (resultLeaf l)))) ({!!} , {!!}))
+            nextTree : (l : leafOf localTree) → W P (leafType l)
+            nextTree l = transport! (W P) (leafCoh l) (Φ (resultLeaf l))
 
-      -- Well, not quite.  This is only a two level decoration.  So the base type 
-      -- seems to work out very nicely.  But what we want to return is the multiplication
-      -- of this with the recursive call ...
+            nextCons : (l : leafOf localTree) → γ P (leafType l)
+            nextCons l = transport! (γ P) (leafCoh l) (collapse (Φ (resultLeaf l)))
+
+            nextCoh : (l : leafOf localTree) → collapse (nextTree l) == nextCons l
+            nextCoh l = transport!-fun-coh (W P) (γ P) (leafCoh l) (Φ (resultLeaf l)) collapse
+
+            nodeCoe : (l : leafOf localTree) → (n : nodeOf (nextTree l)) → nodeOf (node i (c , Φ))
+            nodeCoe l n = inj₂ (resultLeaf l , transport!-comp (W P) nodeOf (leafCoh l) (Φ (resultLeaf l)) n) 
+
+            nodeCoh : (l : leafOf localTree) → (n : nodeOf (nextTree l)) → nodeType {w = nextTree l} n == nodeType (nodeCoe l n)
+            nodeCoh l n = {!!}
+
+            Ψ' : (n : nodeOf {i = i} (node i (c , Φ))) → γ SmP (nodeType {w = node i (c , Φ)} n)
+            Ψ' = Ψ
+
+            nextDec : (l : leafOf localTree) → (n : nodeOf (nextTree l)) → γ SmP (nodeType {w = nextTree l} n)
+            nextDec l n = {!!} -- transport (γ SmP) (nodeCoh l n) (Ψ' (nodeCoe l n))
+
+            IH : (l : leafOf localTree) → γ SmP (leafType l , nextCons l)
+            IH l = sm-graft (leafType l , nextCons l) ((nextTree l , nextCoh l) , nextDec l)
 
     sm-place-eqv : (b : B) → (d : γ (SmP ⊚ SmP) b) → ρ (SmP ⊚ SmP) (b , d) ≃ ρ SmP (b , sm-graft b d)
     sm-place-eqv b d = {!!}
@@ -91,10 +109,10 @@ module SliceMonad where
     
     postulate
 
-      fm-unit-leaf-law : {b : B} (d : γ SmP b) → mult (unit-leaf-decor d) == d
-      fm-unit-root-law : {b : B} (d : γ SmP b) → mult (unit-root-decor d) == d
+      sm-unit-leaf-law : {b : B} (d : γ SmP b) → mult (unit-leaf-decor d) == d
+      sm-unit-root-law : {b : B} (d : γ SmP b) → mult (unit-root-decor d) == d
 
-      fm-assoc-law : {b : B} (d : γ (SmP ⊚ SmP ⊚ SmP) b) → 
+      sm-assoc-law : {b : B} (d : γ (SmP ⊚ SmP ⊚ SmP) b) → 
                      mult (mult-left d) == mult (mult-right (decor-assoc-right b d))
 
     Sm : PolyMonad B
@@ -102,8 +120,8 @@ module SliceMonad where
            { P = SmP
            ; η = sm-η
            ; μ = sm-μ
-           ; unit-leaf-law = fm-unit-leaf-law
-           ; unit-root-law = fm-unit-root-law
-           ; assoc-law = fm-assoc-law
+           ; unit-leaf-law = sm-unit-leaf-law
+           ; unit-root-law = sm-unit-root-law
+           ; assoc-law = sm-assoc-law
            }
 

@@ -89,6 +89,22 @@ module Prelude where
     → (B y → B x)
   transport! B p = coe! (ap B p)
 
+  transport-comp : ∀ {i j} {A : Set i} (B : A → Set j) (C : {a : A} → B a → Set j)
+                   {x y : A} (p : x == y) (e : B x) (α : C (transport B p e)) → C e
+  transport-comp B C idp e α = α
+
+  transport!-comp : ∀ {i j} {A : Set i} (B : A → Set j) (C : {a : A} → B a → Set j)
+                   {x y : A} (p : x == y) (f : B y) (β : C (transport! B p f)) → C f
+  transport!-comp B C idp f β = β
+
+  transport-fun-coh : ∀ {i j} {A : Set i} (B C : A → Set j) {x y : A} (p : x == y) (e : B x)
+                      (φ : {a : A} → B a → C a) → φ (transport B p e) == transport C p (φ e)
+  transport-fun-coh B C idp e φ = idp
+
+  transport!-fun-coh : ∀ {i j} {A : Set i} (B C : A → Set j) {x y : A} (p : x == y) (f : B y)
+                      (φ : {a : A} → B a → C a) → φ (transport! B p f) == transport! C p (φ f)
+  transport!-fun-coh B C idp e f = idp
+
   transport-coh : ∀ {i j} {A : Set i} (B : A → Set j) {x y : A} {p q : x == y} → 
                   (α : p == q) → (e : B x) → transport B p e == transport B q e
   transport-coh B idp e = idp

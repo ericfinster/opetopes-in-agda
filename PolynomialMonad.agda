@@ -107,3 +107,35 @@ module PolynomialMonad where
       assoc-law : {i : I} → (c : γ ((P ⊚ P) ⊚ P) i) → 
                   mult (mult-left c) == mult (mult-right (decor-assoc-right i c))
 
+  module CollapseLemmas {I : Set} (M : PolyMonad I) where
+
+    open PolyMonad M renaming (η to ηM ; μ to μM)
+    open UnitLemmas P ηM
+    open AssocLemmas P μM
+    open Poly
+    open _⇛_
+    open _≃_
+
+    collapse : {i : I} → W P i → γ P i
+    collapse (leaf i) = unit-at i 
+    collapse (node i (c , φ)) = mult (c , (λ p → collapse (φ p)))
+    
+    leaf-place-equiv : {i : I} → (w : W P i) → leafOf w ≃ ρ P (i , collapse w)
+    leaf-place-equiv (leaf i) = ρ-eqv ηM i tt
+    leaf-place-equiv (node i (c , φ)) = 
+      (ρ-eqv μM i (c , λ p → collapse (φ p))) ⊙ (Σ-eqv-inv (ρ P (i , c)) _ _ (λ p → leaf-place-equiv (φ p)))
+
+    collapse-leaf : {i : I} → (w : W P i) → (l : leafOf w) → ρ P (i , collapse w)
+    collapse-leaf w = f (leaf-place-equiv w)
+
+    uncollapse-leaf : {i : I} → (w : W P i) → ρ P (i , collapse w) → leafOf w
+    uncollapse-leaf w = g (leaf-place-equiv w)
+
+    leaf-place-coh : {i : I} → (w : W P i) → (l : leafOf w) → leafType l == τ P ((i , collapse w) , collapse-leaf w l)
+    leaf-place-coh (leaf i) tt = ! (unit-place-type-coh (ρ-map ηM tt tt))
+    leaf-place-coh (node i (c , φ)) (p , l) = IH ∙ {!!} 
+
+      where IH : leafType l == τ P ((τ P ((i , c) , p) , collapse (φ p)) , collapse-leaf (φ p) l)
+            IH = leaf-place-coh _ l
+
+
