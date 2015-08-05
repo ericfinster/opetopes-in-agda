@@ -6,9 +6,11 @@
 
 module Prelude where
 
+  open import Agda.Primitive public 
+
   infixr 4 _,_
-  infixr 2 _×_
-  infixr 1 _⊎_
+  -- infixr 2 _×_
+  -- infixr 1 _⊎_
 
   data ℕ : Set where
     zero : ℕ
@@ -19,7 +21,7 @@ module Prelude where
   record ⊤ : Set where
     constructor tt
 
-  record Σ (A : Set) (B : A → Set) : Set where
+  record Σ {i j} (A : Set i) (B : A → Set j) : Set (i ⊔ j) where
     constructor _,_
     field
       proj₁ : A
@@ -27,12 +29,12 @@ module Prelude where
 
   open Σ public
 
-  Σ-syntax : ∀ (A : Set) → (A → Set) → Set 
+  Σ-syntax : ∀ {i j} (A : Set i) → (A → Set j) → Set (i ⊔ j)
   Σ-syntax = Σ
 
   syntax Σ-syntax A (λ x → B) = Σ[ x ∈ A ] B
 
-  _×_ : ∀ (A : Set) (B : Set) → Set
+  _×_ : ∀ {i j} (A : Set i) (B : Set j) → Set (i ⊔ j)
   A × B = Σ[ x ∈ A ] B
 
   data ⊥ : Set where
@@ -40,7 +42,7 @@ module Prelude where
   {-# IMPORT Data.FFI #-}
   {-# COMPILED_DATA ⊥ Data.FFI.AgdaEmpty #-}
 
-  data _⊎_ (A : Set) (B : Set) : Set where
+  data _⊎_ {i j} (A : Set i) (B : Set j) : Set (i ⊔ j) where
     inj₁ : (x : A) → A ⊎ B
     inj₂ : (y : B) → A ⊎ B
 
@@ -131,7 +133,7 @@ module Prelude where
   K : {A : Set} {x y : A} (p q : x == y) → p == q
   K idp idp = idp
 
-  record _≃_ (A B : Set) : Set where
+  record _≃_ {i} (A B : Set i) : Set i where
 
     field
 
@@ -141,7 +143,7 @@ module Prelude where
       g-f : (a : A) → a == g (f a)
       f-g : (b : B) → f (g b) == b
 
-  id-equiv : (A : Set) → A ≃ A
+  id-equiv : ∀ {i} (A : Set i) → A ≃ A
   id-equiv A = record { 
                  f = λ a → a ; 
                  g = λ a → a ; 
@@ -149,22 +151,22 @@ module Prelude where
                  f-g = λ a → idp 
                }
 
-  Σ-transport : {A : Set} → {P : A → Set} → {a b : A} → {x : P a} → 
+  Σ-transport : ∀ {i j} {A : Set i} → {P : A → Set j} → {a b : A} → {x : P a} → 
                 (p : a == b) → (a , x) == (b , transport P p x)
   Σ-transport idp = idp
 
-  Σ-transport! : {A : Set} → {P : A → Set} → {a b : A} → {y : P b} → 
+  Σ-transport! : ∀ {i j} {A : Set i} → {P : A → Set j} → {a b : A} → {y : P b} → 
                  (p : a == b) → (b , y) == (a , transport! P p y)
   Σ-transport! idp = idp
 
-  Σ-eqv-base : (A : Set) → (Σ[ u ∈ ⊤ ] A) ≃ A
+  Σ-eqv-base : ∀ {i} (A : Set i) → (Σ[ u ∈ ⊤ ] A) ≃ A
   Σ-eqv-base A = record { 
     f = λ { (tt , a) → a } ; 
     g = λ a → (tt , a) ; 
     g-f = λ _ → idp ; 
     f-g = λ _ → idp }
 
-  Σ-eqv-lift : (A : Set) (P : A → Set) (Q : Σ A P → Set) → 
+  Σ-eqv-lift : ∀ {i j k} (A : Set i) (P : A → Set j) (Q : Σ A P → Set k) → 
                (Σ (Σ A P) Q) ≃ Σ A (λ a → Σ (P a) (λ p → Q (a , p)))
   Σ-eqv-lift A P Q = record { 
     f = λ { ((a , p) , q) → a , (p , q) } ; 
@@ -172,7 +174,7 @@ module Prelude where
     g-f = λ _ → idp ; 
     f-g = λ _ → idp }
 
-  Σ-eqv-inv : (A : Set) (P Q : A → Set) → ((a : A) → P a ≃ Q a) → Σ A P ≃ Σ A Q
+  Σ-eqv-inv : ∀ {i j} (A : Set i) (P Q : A → Set j) → ((a : A) → P a ≃ Q a) → Σ A P ≃ Σ A Q
   Σ-eqv-inv A P Q φ = record { 
     f = λ { (a , p) → a , f (φ a) p } ; 
     g = λ { (a , q) → a , g (φ a) q } ; 
@@ -181,7 +183,7 @@ module Prelude where
 
     where open _≃_
 
-  _⊙_ : {A B C : Set} → B ≃ C → A ≃ B → A ≃ C
+  _⊙_ : ∀ {i} {A B C : Set i} → B ≃ C → A ≃ B → A ≃ C
   φ ⊙ ψ = record { 
     f = λ a → (f φ) ((f ψ) a) ; 
     g = λ c → (g ψ) ((g φ) c) ; 
@@ -200,14 +202,14 @@ module Prelude where
     where open _≃_ e
 
   postulate
-    ∞  : ∀ {a} (A : Set a) → Set a
-    ♯_ : ∀ {a} {A : Set a} → A → ∞ A
-    ♭  : ∀ {a} {A : Set a} → ∞ A → A
+    ∞  : ∀ {i} (A : Set i) → Set i
+    ♯ : ∀ {i} {A : Set i} → A → ∞ A
+    ♭  : ∀ {i} {A : Set i} → ∞ A → A
 
   {-# BUILTIN INFINITY ∞  #-}
-  {-# BUILTIN SHARP    ♯_ #-}
+  {-# BUILTIN SHARP    ♯  #-}
   {-# BUILTIN FLAT     ♭  #-}
 
   postulate
 
-    funext : {A : Set} {P : A → Set} → {f g : (a : A) → P a} → ((a : A) → f a == g a) → f == g
+    funext : ∀ {i j} {A : Set i} {P : A → Set j} → {f g : (a : A) → P a} → ((a : A) → f a == g a) → f == g

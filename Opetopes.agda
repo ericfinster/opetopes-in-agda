@@ -7,47 +7,40 @@
 open import Prelude
 open import Polynomial
 open import PolynomialMonad
+open import IdentityMonad
+open import PullbackMonad
+open import SliceMonad
 
 module Opetopes where
     
   open Poly
   open PolyMonad
+  open Pullback
+  open IdentityM
+  open SliceM
 
-  -- mutual
+  nth-slice : {I : Set} → (M : PolyMonad I) → ℕ → Σ[ J ∈ Set ] PolyMonad J
+  nth-slice M zero = _ , M
+  nth-slice M (suc n) = B S , SlM S
+    
+    where S : PolyMonad (proj₁ (nth-slice M n))
+          S = proj₂ (nth-slice M n)
 
-  --   O : ℕ → Set
-  --   O zero = ⊤
-  --   O (suc n) = B
-  --   where open SliceMonadDefn (S n)
+  O : ℕ → Set
+  O n = proj₁ (nth-slice (IdM ⊤) n)
 
-  --   S : (n : ℕ) → PolyMonad (O n)
-  --   S zero = IdM ⊤
-  --   S (suc n) = Sm
-  --   where open SliceMonadDefn (S n)
+  record OSet {I : Set} (M : PolyMonad I) : Set₁ where
+    coinductive
+    field
+
+      X : I → Set
+      hom : ∞ (OSet (SlM (PbM _ X M)))
+
+  trivial-slices : {I : Set} (M : PolyMonad I) → OSet M
+  trivial-slices {I} M = 
+    record { 
+      X = λ i → ⊤ ; 
+      hom = ♯ (trivial-slices (SlM (PbM _ _ M))) 
+    }
+
   
-  -- object : O 0
-  -- object = tt
-
-  -- arrow : O 1
-  -- arrow = tt , tt
-
-  -- drop : O 2
-  -- drop = arrow , (leaf tt , idp)
-
-  -- 2-glob : O 2
-  -- 2-glob = arrow , (node tt (tt , (λ { tt → leaf tt }))) , idp
-
--- record OSet (I : Set) (P : PolyMonad I) : Set₁ where
---   coinductive
---   field
-
---     J : Set
---     f : J → I
-
---   open Pullback J I f P
---   open SliceMonadDefn PbM
-
---   field
-
---     hom : ∞ (OSet B Sm)
-

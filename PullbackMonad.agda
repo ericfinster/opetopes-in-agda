@@ -15,6 +15,7 @@ module PullbackMonad where
     open PolyMonad 
     open Poly
     open _⇛_
+    open _≃_
 
     PM : Poly I I
     PM = P M
@@ -54,18 +55,25 @@ module PullbackMonad where
               (τ PM ((i , unit-at i) , unit-place-at i) , transport! X (unit-place-type-coh (unit-place-at i)) x) =⟨ idp ⟩ 
               τ PbP (((i , x) , unit-cons i x) , ρ-map ηM tt tt) ∎ 
 
-    module _ where
+    -- module _ where
 
-      open AssocLemmas PM μM
+    --   open AssocLemmas PM μM
+
+    --   pb-mult : (j : J) → γ (PbP ⊚ PbP) j → γ PbP j
+    --   pb-mult (i , x) ((c , φ) , ψ) = (mult (c , (λ p → proj₁ (ψ p)))) , (λ p → {!φ (proj₁ (lift-place p))!})
+
+    postulate
 
       pb-mult : (j : J) → γ (PbP ⊚ PbP) j → γ PbP j
-      pb-mult (i , x) ((c , φ) , ψ) = (mult (c , (λ p → proj₁ (ψ p)))) , (λ p → {!φ (proj₁ (lift-place p))!})
+      pb-place-eqv : (i : J) (c : γ (PbP ⊚ PbP) i) → ρ (PbP ⊚ PbP) (i , c) ≃ ρ PbP (i , pb-mult i c)
+      pb-type-coh : (i : J) (c : γ (PbP ⊚ PbP) i) (p : ρ (PbP ⊚ PbP) (i , c)) → τ (PbP ⊚ PbP) ((i , c) , p) ==
+                    τ PbP ((i , pb-mult i c) , f (pb-place-eqv i c) p)
 
     pb-μ : PbP ⊚ PbP ⇛ PbP
     pb-μ = record { 
       γ-map = pb-mult ; 
-      ρ-eqv = {!!} ; 
-      τ-coh = {!!} }
+      ρ-eqv = pb-place-eqv ; 
+      τ-coh = pb-type-coh }
 
     open UnitLemmas PbP pb-η
     open AssocLemmas PbP pb-μ

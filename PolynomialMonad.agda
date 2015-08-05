@@ -131,11 +131,11 @@ module PolynomialMonad where
     uncollapse-leaf : {i : I} → (w : W P i) → ρ P (i , collapse w) → leafOf w
     uncollapse-leaf w = g (leaf-place-equiv w)
 
-    leaf-place-coh : {i : I} → (w : W P i) → (l : leafOf w) → leafType l == τ P ((i , collapse w) , collapse-leaf w l)
-    leaf-place-coh (leaf i) tt = ! (unit-place-type-coh (ρ-map ηM tt tt))
-    leaf-place-coh (node i (c , φ)) (p , l) = IH ∙ {!!} 
+    -- leaf-place-coh : {i : I} → (w : W P i) → (l : leafOf w) → leafType l == τ P ((i , collapse w) , collapse-leaf w l)
+    -- leaf-place-coh (leaf i) tt = ! (unit-place-type-coh (ρ-map ηM tt tt))
+    -- leaf-place-coh (node i (c , φ)) (p , l) = IH ∙ {!!} 
 
-      where IH : leafType l == τ P ((τ P ((i , c) , p) , collapse (φ p)) , collapse-leaf (φ p) l)
-            IH = leaf-place-coh _ l
+    --   where IH : leafType l == τ P ((τ P ((i , c) , p) , collapse (φ p)) , collapse-leaf (φ p) l)
+    --         IH = leaf-place-coh _ l
 
 

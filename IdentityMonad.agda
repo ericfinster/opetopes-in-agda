@@ -30,8 +30,8 @@ module IdentityMonad where
             f-g = λ { tt → idp } } } ; 
       τ-coh = λ { i x p → idp } }
 
-    idM : PolyMonad I
-    idM = record
+    IdM : PolyMonad I
+    IdM = record
             { P = IdP I
             ; η = id-η
             ; μ = id-μ
