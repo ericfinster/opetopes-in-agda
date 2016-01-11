@@ -10,7 +10,7 @@ open import PolynomialMonad
 
 module PullbackMonad where
 
-  module Pullback (I : Set) (X : I → Set) (M : PolyMonad I) where
+  module Pullback {I : Set} (X : I → Set) (M : PolyMonad I) where
   
     open PolyMonad 
     open Poly

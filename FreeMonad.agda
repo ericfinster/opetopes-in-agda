@@ -15,68 +15,68 @@ module FreeMonad where
     open Poly
     open _≃_
 
-    FmP : Poly I I
-    FmP = record { 
+    FrP : Poly I I
+    FrP = record { 
             γ = W P ; 
             ρ = λ { (i , w) → leafOf w } ; 
             τ = λ { ((i , w) , l) → leafType l } 
           }
 
-    fm-η : IdP I ⇛ FmP
-    fm-η = record { 
+    fr-η : IdP I ⇛ FrP
+    fr-η = record { 
              γ-map = λ i c → leaf i ; 
              ρ-eqv = λ i c → id-equiv ⊤ ;
              τ-coh = λ i c p → idp
            }
 
     {-# TERMINATING #-}
-    fm-graft : (i : I) → γ (FmP ⊚ FmP) i → γ FmP i
-    fm-graft i (leaf .i , ψ) = ψ tt
-    fm-graft i (node .i (c , φ) , ψ) = 
-      node i (c , (λ p₀ → fm-graft (τ P ((i , c) , p₀)) (φ p₀ , (λ p₁ → ψ (p₀ , p₁)))))
+    fr-graft : (i : I) → γ (FrP ⊚ FrP) i → γ FrP i
+    fr-graft i (leaf .i , ψ) = ψ tt
+    fr-graft i (node .i (c , φ) , ψ) = 
+      node i (c , (λ p₀ → fr-graft (τ P ((i , c) , p₀)) (φ p₀ , (λ p₁ → ψ (p₀ , p₁)))))
 
     {-# TERMINATING #-}
-    fm-place-eqv : (i : I) (c : γ (FmP ⊚ FmP) i) → ρ (FmP ⊚ FmP) (i , c) ≃ ρ FmP (i , fm-graft i c)
-    fm-place-eqv i (leaf .i , ψ) = Σ-eqv-base (ρ FmP (i , (ψ tt)))
-    fm-place-eqv i (node .i (c , φ) , ψ) = 
-      Σ-eqv-inv (ρ P (i , c)) _ _ (λ p → fm-place-eqv (τ P ((i , c) , p)) (φ p , (λ p₀ → ψ (p , p₀)))) ⊙ (Σ-eqv-lift _ _ _)
+    fr-place-eqv : (i : I) (c : γ (FrP ⊚ FrP) i) → ρ (FrP ⊚ FrP) (i , c) ≃ ρ FrP (i , fr-graft i c)
+    fr-place-eqv i (leaf .i , ψ) = Σ-eqv-base (ρ FrP (i , (ψ tt)))
+    fr-place-eqv i (node .i (c , φ) , ψ) = 
+      Σ-eqv-inv (ρ P (i , c)) _ _ (λ p → fr-place-eqv (τ P ((i , c) , p)) (φ p , (λ p₀ → ψ (p , p₀)))) ⊙ (Σ-eqv-lift _ _ _)
 
     {-# TERMINATING #-}
-    fm-type-coh : (i : I) (c : γ (FmP ⊚ FmP) i) (p : ρ (FmP ⊚ FmP) (i , c)) →
-                  τ (FmP ⊚ FmP) ((i , c) , p) ==
-                  τ FmP ((i , fm-graft i c) , f (fm-place-eqv i c) p)
-    fm-type-coh i (leaf .i , ψ) (p₀ , p₁) = idp
-    fm-type-coh i (node .i (c , φ) , ψ) ((p , l₀) , l₁) = 
-      leafType l₁ =⟨ fm-type-coh (τ P ((i , c) , p)) (φ p , (λ p₀ → ψ (p , p₀))) (l₀ , l₁)  ⟩ 
-      leafType (f (fm-place-eqv (τ P ((i , c) , p)) (φ p , (λ p₀ → ψ (p , p₀)))) (l₀ , l₁)) ∎
+    fr-type-coh : (i : I) (c : γ (FrP ⊚ FrP) i) (p : ρ (FrP ⊚ FrP) (i , c)) →
+                  τ (FrP ⊚ FrP) ((i , c) , p) ==
+                  τ FrP ((i , fr-graft i c) , f (fr-place-eqv i c) p)
+    fr-type-coh i (leaf .i , ψ) (p₀ , p₁) = idp
+    fr-type-coh i (node .i (c , φ) , ψ) ((p , l₀) , l₁) = 
+      leafType l₁ =⟨ fr-type-coh (τ P ((i , c) , p)) (φ p , (λ p₀ → ψ (p , p₀))) (l₀ , l₁)  ⟩ 
+      leafType (f (fr-place-eqv (τ P ((i , c) , p)) (φ p , (λ p₀ → ψ (p , p₀)))) (l₀ , l₁)) ∎
   
-    fm-μ : FmP ⊚ FmP ⇛ FmP
-    fm-μ = record { 
-             γ-map = fm-graft ; 
-             ρ-eqv = fm-place-eqv ; 
-             τ-coh = fm-type-coh 
+    fr-μ : FrP ⊚ FrP ⇛ FrP
+    fr-μ = record { 
+             γ-map = fr-graft ; 
+             ρ-eqv = fr-place-eqv ; 
+             τ-coh = fr-type-coh 
            }
 
-    open UnitLemmas FmP fm-η
-    open AssocLemmas FmP fm-μ
+    open UnitLemmas FrP fr-η
+    open AssocLemmas FrP fr-μ
 
-    fm-unit-leaf-law : {i : I} (c : γ FmP i) → mult (unit-leaf-decor c) == c
-    fm-unit-leaf-law (leaf i) = idp
-    fm-unit-leaf-law (node i (c , φ)) = ap (λ φ₀ → node i (c , φ₀)) (funext IH)
+    fr-unit-leaf-law : {i : I} (c : γ FrP i) → mult (unit-leaf-decor c) == c
+    fr-unit-leaf-law (leaf i) = idp
+    fr-unit-leaf-law (node i (c , φ)) = ap (λ φ₀ → node i (c , φ₀)) (funext IH)
 
       where IH : (p : ρ P (_ , c)) → mult (unit-leaf-decor (φ p)) == φ p
-            IH p = fm-unit-leaf-law (φ p)
+            IH p = fr-unit-leaf-law (φ p)
 
-    fm-unit-root-law : {i : I} (c : γ FmP i) → mult (unit-root-decor c) == c
-    fm-unit-root-law (leaf i) = idp
-    fm-unit-root-law (node i (c , φ)) = idp
+    fr-unit-root-law : {i : I} (c : γ FrP i) → mult (unit-root-decor c) == c
+    fr-unit-root-law (leaf i) = idp
+    fr-unit-root-law (node i (c , φ)) = idp
 
     module _ {i : I} {c : γ P i}
       (φ : (p : ρ P (i , c)) → W P (τ P (_ , p)))
-      (ψ : (p : leafOf (node i (c , φ))) → γ (FmP ⊚ FmP) (τ FmP (_ , p)))
+      (ψ : (p : leafOf (node i (c , φ))) → γ (FrP ⊚ FrP) (τ FrP (_ , p)))
       (p₀ : ρ P (_ , c)) (l : leafOf (mult (φ p₀ , (λ p₁ → proj₁ (ψ (p₀ , p₁)))))) where
 
-      d : γ (FmP ⊚ FmP) _
+      d : γ (FrP ⊚ FrP) _
       d = (φ p₀ , (λ p₁ → proj₁ (ψ (p₀ , p₁))))
         
       -- Anyone?
@@ -86,10 +86,10 @@ module FreeMonad where
 
 
     {-# TERMINATING #-}
-    fm-assoc-law : {i : I} (c : γ (FmP ⊚ FmP ⊚ FmP) i) →
+    fr-assoc-law : {i : I} (c : γ (FrP ⊚ FrP ⊚ FrP) i) →
                    mult (mult-left c) == mult (mult-right (decor-assoc-right i c))
-    fm-assoc-law (leaf i , ψ) = idp
-    fm-assoc-law (node i (c , φ) , ψ) =
+    fr-assoc-law (leaf i , ψ) = idp
+    fr-assoc-law (node i (c , φ) , ψ) =
       mult (mult-left (node i (c , φ) , ψ))                                                                                                        =⟨ idp ⟩ 
       mult (node i (c , φ) , λ p → mult (ψ p))                                                                                                     =⟨ idp ⟩ 
       node i (c , λ p₀ → mult (φ p₀ , λ p₁ → mult (ψ (p₀ , p₁))))                                                                                  =⟨ idp ⟩
@@ -105,7 +105,7 @@ module FreeMonad where
 
       where IH : (p : ρ P (i , c)) → mult (mult-left (φ p , (λ p₁ → ψ (p , p₁)))) == 
                                      mult (mult-right (decor-assoc-right (τ P ((i , c) , p)) (φ p , (λ p₁ → ψ (p , p₁)))))
-            IH p = fm-assoc-law (φ p , (λ p₁ → ψ (p , p₁)))
+            IH p = fr-assoc-law (φ p , (λ p₁ → ψ (p , p₁)))
 
             lemma : (p₀ : ρ P (i , c)) → induced-decor (λ { (p₁ , p₂) → proj₂ (ψ (p₀ , p₁)) p₂ }) == 
                                          (λ q → (induced-decor (λ { (p₀ , p₁) → proj₂ (ψ p₀) p₁ })) (p₀ , q))
@@ -117,13 +117,25 @@ module FreeMonad where
                                           mult (mult (φ p₀ , (λ p₁ → proj₁ (ψ (p₀ , p₁)))) , ((λ q → (induced-decor (λ { (p₀ , p₁) → proj₂ (ψ p₀) p₁ })) (p₀ , q))))
             lemma₀ p₀ = ap (λ X → mult (mult (φ p₀ , (λ p₁ → proj₁ (ψ (p₀ , p₁)))) , X)) (lemma p₀) 
 
-    Fm : PolyMonad I
-    Fm = record
-           { P = FmP
-           ; η = fm-η
-           ; μ = fm-μ
-           ; unit-leaf-law = fm-unit-leaf-law
-           ; unit-root-law = fm-unit-root-law
-           ; assoc-law = fm-assoc-law
+    FrM : PolyMonad I
+    FrM = record { 
+            P = FrP ;
+            η = fr-η ;
+            μ = fr-μ ;
+            unit-leaf-law = fr-unit-leaf-law ;
+            unit-root-law = fr-unit-root-law ;
+            assoc-law = fr-assoc-law
            }
+
+  module _ where
+
+    Fp : ℕ → Poly ⊤ ⊤
+    Fp n = record { 
+             γ = λ { tt → ⊤ } ; 
+             ρ = λ { (tt , tt) → Fin n } ; 
+             τ = λ _ → tt 
+           }
+
+    F : ℕ → PolyMonad ⊤ 
+    F n = let open FreeM ⊤ (Fp n) in FrM
 

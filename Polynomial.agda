@@ -97,3 +97,5 @@ module Polynomial where
     nodeType {w = leaf ._} ()
     nodeType {w = node i (c , _)} (inj₁ tt) = (i , c)
     nodeType {w = node ._ _} (inj₂ (_ , n)) = nodeType n
+
+

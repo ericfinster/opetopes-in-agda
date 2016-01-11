@@ -8,47 +8,6 @@ module Prelude where
 
   open import Agda.Primitive public 
 
-  infixr 4 _,_
-  -- infixr 2 _×_
-  -- infixr 1 _⊎_
-
-  data ℕ : Set where
-    zero : ℕ
-    suc  : (n : ℕ) → ℕ
-
-  {-# BUILTIN NATURAL ℕ #-}
-
-  record ⊤ : Set where
-    constructor tt
-
-  record Σ {i j} (A : Set i) (B : A → Set j) : Set (i ⊔ j) where
-    constructor _,_
-    field
-      proj₁ : A
-      proj₂ : B proj₁
-
-  open Σ public
-
-  Σ-syntax : ∀ {i j} (A : Set i) → (A → Set j) → Set (i ⊔ j)
-  Σ-syntax = Σ
-
-  syntax Σ-syntax A (λ x → B) = Σ[ x ∈ A ] B
-
-  _×_ : ∀ {i j} (A : Set i) (B : Set j) → Set (i ⊔ j)
-  A × B = Σ[ x ∈ A ] B
-
-  data ⊥ : Set where
-
-  {-# IMPORT Data.FFI #-}
-  {-# COMPILED_DATA ⊥ Data.FFI.AgdaEmpty #-}
-
-  data _⊎_ {i j} (A : Set i) (B : Set j) : Set (i ⊔ j) where
-    inj₁ : (x : A) → A ⊎ B
-    inj₂ : (y : B) → A ⊎ B
-
-  {-# IMPORT Data.FFI #-}
-  {-# COMPILED_DATA _⊎_ Data.FFI.AgdaEither Left Right #-}
-
   data _==_ {i} {A : Set i} (a : A) : A → Set i where
     idp : a == a
 
@@ -66,8 +25,13 @@ module Prelude where
 
   syntax ap f p = p |in-ctx f
 
-  fiber : {A B : Set} → (f : A → B) → B → Set
-  fiber f b = Σ[ a ∈ _ ] f a == b
+  PathOver : ∀ {i j} {A : Set i} (B : A → Set j)
+    {x y : A} (p : x == y) (u : B x) (v : B y) → Set j
+  PathOver B idp u v = (u == v)
+
+  infix 30 PathOver
+  syntax PathOver B p u v =
+    u == v [ B ↓ p ]
 
   ap : ∀ {i j} {A : Set i} {B : Set j} (f : A → B) {x y : A}
     → (x == y → f x == f y)
@@ -124,14 +88,66 @@ module Prelude where
   ! : ∀ {i} → {A : Set i} → {x y : A} → (x == y → y == x)
   ! idp = idp
 
-  has-all-paths : Set → Set
-  has-all-paths A = (x y : A) → x == y
 
-  unit-has-all-paths : has-all-paths ⊤
-  unit-has-all-paths tt tt = idp
+  data ℕ : Set where
+    zero : ℕ
+    suc  : (n : ℕ) → ℕ
 
-  K : {A : Set} {x y : A} (p q : x == y) → p == q
-  K idp idp = idp
+  {-# BUILTIN NATURAL ℕ #-}
+
+  data Fin : ℕ → Set where
+    fzero : {n : ℕ} → Fin (suc n)
+    fsuc  : {n : ℕ} (i : Fin n) → Fin (suc n)
+
+  record ⊤ : Set where
+    constructor tt
+
+
+  infixr 60 _,_
+
+  record Σ {i j} (A : Set i) (B : A → Set j) : Set (i ⊔ j) where
+    constructor _,_
+    field
+      proj₁ : A
+      proj₂ : B proj₁
+
+  open Σ public
+
+  Σ' : ∀ {i j} (A : Set i) → (A → Set j) → Set (i ⊔ j)
+  Σ' = Σ
+
+  syntax Σ' A (λ x → B) = Σ[ x ∈ A ] B
+
+  pair= : ∀ {i j} {A : Set i} {B : A → Set j}
+    {a a' : A} (p : a == a') {b : B a} {b' : B a'}
+    (q : b == b' [ B ↓ p ])
+    → (a , b) == (a' , b')
+  pair= idp q = ap (_,_ _) q
+
+  pair×= : ∀ {i j} {A : Set i} {B : Set j}
+    {a a' : A} (p : a == a') {b b' : B} (q : b == b')
+    → (a , b) == (a' , b')
+  pair×= idp q = pair= idp q
+
+  infixr 60 _×_
+
+  _×_ : ∀ {i j} (A : Set i) (B : Set j) → Set (i ⊔ j)
+  A × B = Σ[ x ∈ A ] B
+
+  data ⊥ : Set where
+
+  {-# IMPORT Data.FFI #-}
+  {-# COMPILED_DATA ⊥ Data.FFI.AgdaEmpty #-}
+
+  infixr 50 _⊎_
+
+  data _⊎_ {i j} (A : Set i) (B : Set j) : Set (i ⊔ j) where
+    inj₁ : (x : A) → A ⊎ B
+    inj₂ : (y : B) → A ⊎ B
+
+  {-# IMPORT Data.FFI #-}
+  {-# COMPILED_DATA _⊎_ Data.FFI.AgdaEither Left Right #-}
+
 
   record _≃_ {i} (A B : Set i) : Set i where
 
@@ -192,6 +208,34 @@ module Prelude where
 
     where open _≃_
 
+  postulate
+
+    funext : ∀ {i j} {A : Set i} {P : A → Set j} → {f g : (a : A) → P a} → ((a : A) → f a == g a) → f == g
+
+  ¬ : ∀ {i} → Set i → Set i
+  ¬ A = A → ⊥
+
+  _≠_ : ∀ {i} {A : Set i} → (A → A → Set i)
+  x ≠ y = ¬ (x == y)
+
+  isDec : ∀ {i} (A : Set i) → Set i
+  isDec A = (x y : A) → (x == y) ⊎ (x ≠ y)
+
+  unitDec : isDec ⊤
+  unitDec tt tt = inj₁ idp
+
+  fiber : {A B : Set} → (f : A → B) → B → Set
+  fiber f b = Σ[ a ∈ _ ] f a == b
+
+  has-all-paths : Set → Set
+  has-all-paths A = (x y : A) → x == y
+
+  unit-has-all-paths : has-all-paths ⊤
+  unit-has-all-paths tt tt = idp
+
+  K : {A : Set} {x y : A} (p q : x == y) → p == q
+  K idp idp = idp
+
   equiv-unit-has-all-paths : (A : Set) → ⊤ ≃ A → has-all-paths A
   equiv-unit-has-all-paths A e x y = 
     x =⟨ ! (f-g x) ⟩
@@ -200,16 +244,3 @@ module Prelude where
     y ∎
 
     where open _≃_ e
-
-  postulate
-    ∞  : ∀ {i} (A : Set i) → Set i
-    ♯ : ∀ {i} {A : Set i} → A → ∞ A
-    ♭  : ∀ {i} {A : Set i} → ∞ A → A
-
-  {-# BUILTIN INFINITY ∞  #-}
-  {-# BUILTIN SHARP    ♯  #-}
-  {-# BUILTIN FLAT     ♭  #-}
-
-  postulate
-
-    funext : ∀ {i j} {A : Set i} {P : A → Set j} → {f g : (a : A) → P a} → ((a : A) → f a == g a) → f == g
