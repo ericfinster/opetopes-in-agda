@@ -1,135 +1,112 @@
---
---  SliceMonad.agda - The slice monad of a polynomial monad
---
---  Eric Finster
---
+{-# OPTIONS --without-K #-}
 
-open import Prelude
+open import HoTT
+
 open import Polynomial
+open import CartesianMorphism
 open import PolynomialMonad
-open import FreeMonad
+open import PolyMisc
 
 module SliceMonad where
 
-  module SliceM {I : Set} (M : PolyMonad I) where
+  module _ {ℓ} {I : Type ℓ} (M : PolyMonad I) where
 
-    open PolyMonad M renaming (η to ηM ; μ to μM)
-    open CollapseLemmas M
-    open FreeMonad
-    open Poly
-    open _⇛_
-    open _≃_
+    open PolyMonad 
 
-    B : Set
-    B = Σ I (γ P)
+    data SlCn : {i : I} → γ (P M) i → Type ℓ where
+      dot : (i : I) → SlCn {i = i} (⟪ η M ⟫ lt)
+      box : {i : I} → (c : γ (P M) i) → 
+            (ε : (p : ρ (P M) c) → Σ (γ (P M) (τ (P M) p)) SlCn) → 
+            SlCn (⟪ μ M ⟫ (c , fst ∘ ε))
+  
+    SlPl : {i : I} → {c : γ (P M) i} → (w : SlCn c) → Type ℓ
+    SlPl (dot i) = Lift ⊥
+    SlPl (box c ε) = Lift {j = ℓ} ⊤ ⊔ Σ (ρ (P M) c) (λ p → SlPl (snd (ε p)))
 
-    SmP : Poly B B
-    SmP = record { 
-      γ = λ { (i , c) → fiber collapse c } ; 
-      ρ = λ { ((i , c) , w , ev) → nodeOf w } ; 
-      τ = λ { (((i , c) , w , ev) , n) → nodeType n } }
+    B : Type ℓ
+    B = Σ I (γ (P M))
 
-    corolla-has-one-node : {i : I} → (c : γ P i) → ⊤ ≃ nodeOf (corolla {P = P} i c) 
-    corolla-has-one-node c = record { 
-      f = λ { tt → inj₁ tt } ; 
-      g = λ { _ → tt } ; 
-      g-f = λ { tt → idp } ; 
-      f-g = λ { (inj₁ tt) → idp ; 
-                (inj₂ (_ , ())) } }
+    {-# TERMINATING #-}
+    SlP : Poly B B
+    γ SlP (i , c) = SlCn c
+    ρ SlP {i , c} n = SlPl n
+    τ SlP {i , _} {dot .i} (lift ())
+    τ SlP {i , _} {box c ε} (inl (lift unit)) = i , c
+    τ SlP {i , _} {box c ε} (inr (p , n)) = τ SlP n
 
-    sm-η : IdP B ⇛ SmP
-    sm-η = record { 
-      γ-map = λ { (i , c) tt → (corolla i c , unit-leaf-law c) } ;
-      ρ-eqv = λ { (i , c) tt → corolla-has-one-node c } ; 
-      τ-coh = λ { (i , c) tt tt → idp } }
+    sl-η : IdP B ⇝ SlP
+    γ-map sl-η {i , c} _ = transport SlCn (γ≈ (η-left-law M c)) (box c (λ p → (⟪ η M ⟫ lt) , dot (τ (P M) p)))
+    ρ-eqv sl-η {i , c} {lift unit} = {!!} ∘e lemma 
+
+      where lemma : Lift {j = ℓ} ⊤ ≃ SlPl (box c (λ p → ⟪ η M ⟫ lt , dot (τ (P M) p)))
+            lemma = (λ { (lift unit) → inl lt }) , is-eq _ (λ { p → lt }) 
+                    (λ { (inl (lift unit)) → idp ; (inr (_ , lift ())) }) 
+                    (λ { (lift unit) → idp })
+
+    τ-coh sl-η p = {!!}
+
+    -- open ADMIT
 
     -- {-# TERMINATING #-}
-    -- sm-graft₀ : (b : B) → γ (SmP ⊚ SmP) b → γ SmP b
-    -- sm-graft₀ (i , ._) ((leaf .i , idp) , _) = γ-map sm-η (i , _) tt
-    -- sm-graft₀ (i , ._) ((node .i (c , Φ) , idp) , Ψ) = 
-    --   fm-graft i (localTree , λ l → proj₁ (IH l)) , {!!}  
+    -- sl-join : {b : B} → γ (SlP ⊚ SlP) b → γ SlP b
+    -- sl-join {i , ._} ((leaf .i , idp) , ψ) = ⟪ sl-η ⟫ lt
+    -- sl-join {i , ._} ((node (c , φ) , idp) , ψ) = 
+    --   (⟪ fr-μ (P M) ⟫ (localTree , fst ∘ IH) , ADMIT)  -- ! (γ≈ (ε-is-monad-map (localTree , fst ∘ IH))) ∙ {!!})
 
-    --   where open FreeM I P
-    --         open AssocLemmas FmP fm-μ
+    --   where localCons : γ SlP (i , c)
+    --         localCons = ψ (inl lt)
 
-    --         localCons : γ SmP (i , c)
-    --         localCons = (Ψ (inj₁ tt))
+    --         localTree : W (P M) i
+    --         localTree = fst localCons
 
-    --         localTree : W P i
-    --         localTree = proj₁ localCons
-
-    --         localEv : collapse localTree == c
-    --         localEv = proj₂ localCons
+    --         localEv : ⟪ ε ⟫ localTree == c
+    --         localEv = snd localCons
   
-    --         resultLeaf : leafOf localTree → ρ P (i , c)
-    --         resultLeaf l = transport (ρ P) (ap (λ c₀ → (i , c₀)) localEv) (collapse-leaf localTree l) 
+    --         liftDec : ⟦ FrP (P M) ⟧⟦ localTree ≺ W (P M) ⟧
+    --         liftDec = ⟪ ε ∣ W (P M) ↓ localEv ⟫⇑ φ
 
-    --         leafCoh : (l : leafOf localTree) → leafType l == τ P ((i , c) , resultLeaf l)
-    --         leafCoh l = {!!}
+    --         nextTree : (l : leafOf localTree) → W (P M) (leafType l)
+    --         nextTree l = liftDec l
 
-    --         nextTree : (l : leafOf localTree) → W P (leafType l)
-    --         nextTree l = transport! (W P) (leafCoh l) (Φ (resultLeaf l))
+    --         nextCons : (l : leafOf localTree) → γ (P M) (leafType l)
+    --         nextCons l = ⟪ ε ⟫ (nextTree l)
 
-    --         nextCons : (l : leafOf localTree) → γ P (leafType l)
-    --         nextCons l = transport! (γ P) (leafCoh l) (collapse (Φ (resultLeaf l)))
+    --         nodeCoe : (l : leafOf localTree) → (n : nodeOf (nextTree l)) → nodeOf (node (c , φ))
+    --         nodeCoe l n = inr (⟦ P M ↓ localEv ⟧↓ ( ⟪ ε ⟫↓ l) , nodeTrans (⟪ ε ∣ W (P M) ↓ localEv ⟫⇑-po φ l) n)
 
-    --         nextCoh : (l : leafOf localTree) → collapse (nextTree l) == nextCons l
-    --         nextCoh l = transport!-fun-coh (W P) (γ P) (leafCoh l) (Φ (resultLeaf l)) collapse
+    --         nodeCoh : (l : leafOf localTree) → (n : nodeOf (nextTree l)) → nodeType n == nodeType (nodeCoe l n)
+    --         nodeCoh l n = nodeTypeCoh (⟪ ε ∣ W (P M) ↓ localEv ⟫⇑-po φ l) n
 
-    --         nodeCoe : (l : leafOf localTree) → (n : nodeOf (nextTree l)) → nodeOf (node i (c , Φ))
-    --         nodeCoe l n = inj₂ (resultLeaf l , transport!-comp (W P) nodeOf (leafCoh l) (Φ (resultLeaf l)) n) 
+    --         nextDec : (l : leafOf localTree) → ⟦ SlP ⟧⟦ nextTree l , idp ≺ γ SlP ⟧
+    --         nextDec l n = transport (γ SlP)  (! (nodeCoh l n)) (ψ (nodeCoe l n)) 
 
-    --         nodeCoh : (l : leafOf localTree) → (n : nodeOf (nextTree l)) → nodeType {w = nextTree l} n == nodeType (nodeCoe l n)
-    --         nodeCoh l n = {!!}
+    --         IH : (l : leafOf localTree) → γ SlP (leafType l , nextCons l)
+    --         IH l = sl-join {leafType l , nextCons l} ((nextTree l , idp) , nextDec l)
 
-    --         Ψ' : (n : nodeOf {i = i} (node i (c , Φ))) → γ SmP (nodeType {w = node i (c , Φ)} n)
-    --         Ψ' = Ψ
+    --         IH-ev : (l : leafOf localTree) → ⟪ ε ⟫ (fst (IH l)) == nextCons l
+    --         IH-ev l = snd (IH l)
 
-    --         nextDec : (l : leafOf localTree) → (n : nodeOf (nextTree l)) → γ SmP (nodeType {w = nextTree l} n)
-    --         nextDec l n = {!!} -- transport (γ SmP) (nodeCoh l n) (Ψ' (nodeCoe l n))
+    --         -- unfold : ⟪ (ε ∥ ε) ▶ μ M ⟫ (localTree , fst ∘ IH) == 
+    --         --          ⟪ (ε ∥ ε) ▶ μ M ⟫ (localTree , fst ∘ IH) 
+    --         -- unfold = ⟪ μ M ⟫ (⟪ ε ⟫ localTree , (λ p → transport (γ (P M)) (⟪ ε ⓐ localTree ⟫↑= p) (⟪ ε ⟫ ((fst ∘ IH) (⟪ ε ⟫↑ p))))) =⟨ idp ⟩ 
+    --         --          ⟪ (ε ∥ ε) ▶ μ M ⟫ (localTree , fst ∘ IH) ∎
 
-    --         IH : (l : leafOf localTree) → γ SmP (leafType l , nextCons l)
-    --         IH l = sm-graft₀ (leafType l , nextCons l) ((nextTree l , nextCoh l) , nextDec l)
+    --         -- goal : ⟪ ε ⟫ (⟪ fr-μ (P M) ⟫ (localTree , fst ∘ IH)) == ⟪ ε ⟫ (node (c , φ))
+    --         -- goal = ⟪ ε ⟫ (⟪ fr-μ (P M) ⟫ (localTree , fst ∘ IH)) =⟨ ! (γ≈ (ε-is-monad-map (localTree , fst ∘ IH))) ⟩
+    --         --        ⟪ (ε ∥ ε) ▶ μ M ⟫ (localTree , fst ∘ IH) =⟨ {!ADMIT!} ⟩ 
+                   
+    --         --        ⟪ ε ⟫ (node (c , φ)) ∎
 
-    -- sm-place-eqv : (b : B) → (d : γ (SmP ⊚ SmP) b) → ρ (SmP ⊚ SmP) (b , d) ≃ ρ SmP (b , sm-graft₀ b d)
-    -- sm-place-eqv b d = {!!}
-
-    -- sm-type-coh : (b : B) → (d : γ (SmP ⊚ SmP) b) → (n : ρ (SmP ⊚ SmP) (b , d)) → 
-    --               τ (SmP ⊚ SmP) ((b , d), n) == τ SmP ((b , sm-graft₀ b d) , f (sm-place-eqv b d) n)
-    -- sm-type-coh b d n = {!!}
-
-    postulate
-
-      sm-graft : (b : B) → γ (SmP ⊚ SmP) b → γ SmP b
-      sm-place-eqv : (b : B) → (d : γ (SmP ⊚ SmP) b) → ρ (SmP ⊚ SmP) (b , d) ≃ ρ SmP (b , sm-graft b d)
-      sm-type-coh : (b : B) → (d : γ (SmP ⊚ SmP) b) → (n : ρ (SmP ⊚ SmP) (b , d)) → 
-                    τ (SmP ⊚ SmP) ((b , d), n) == τ SmP ((b , sm-graft b d) , f (sm-place-eqv b d) n)
-
-
-    sm-μ : SmP ⊚ SmP ⇛ SmP
-    sm-μ = record { 
-      γ-map = sm-graft ; 
-      ρ-eqv = sm-place-eqv ; 
-      τ-coh = sm-type-coh }
-
-    open UnitLemmas SmP sm-η
-    open AssocLemmas SmP sm-μ
-    
-    postulate
-
-      sm-unit-leaf-law : {b : B} (d : γ SmP b) → mult (unit-leaf-decor d) == d
-      sm-unit-root-law : {b : B} (d : γ SmP b) → mult (unit-root-decor d) == d
-
-      sm-assoc-law : {b : B} (d : γ (SmP ⊚ SmP ⊚ SmP) b) → 
-                     mult (mult-left d) == mult (mult-right (decor-assoc-right b d))
-
-    SlM : PolyMonad B
-    SlM = record
-            { P = SmP
-            ; η = sm-η
-            ; μ = sm-μ
-            ; unit-leaf-law = sm-unit-leaf-law
-            ; unit-root-law = sm-unit-root-law
-            ; assoc-law = sm-assoc-law
-            }
+    -- sl-μ : SlP ⊚ SlP ⇝ SlP
+    -- γ-map sl-μ = sl-join
+    -- ρ-eqv sl-μ = ADMIT
+    -- τ-coh sl-μ = ADMIT
+   
+    -- SlM : PolyMonad B
+    -- P SlM = SlP
+    -- η SlM = sl-η
+    -- μ SlM = sl-μ
+    -- η-left-law SlM c = ADMIT
+    -- η-right-law SlM c = ADMIT
+    -- μ-assoc-law SlM c = ADMIT
 

@@ -1,141 +1,229 @@
---
---  FreeMonad.agda - The free monad on a polynomial
---
---  Eric Finster
---
+{-# OPTIONS --without-K #-}
 
-open import Prelude
+open import HoTT
+
 open import Polynomial
+open import PolyMisc
 open import PolynomialMonad
+open import CartesianMorphism
+open import WTypes
 
 module FreeMonad where
 
-  module FreeM (I : Set) (P : Poly I I) where
+  module _ {ℓ} {I : Set ℓ} (P : Poly I I) where
     
-    open Poly
-    open _≃_
+    open PolyMonad renaming (P to MP)
 
     FrP : Poly I I
-    FrP = record { 
-            γ = W P ; 
-            ρ = λ { (i , w) → leafOf w } ; 
-            τ = λ { ((i , w) , l) → leafType l } 
-          }
+    γ FrP = W P
+    ρ FrP = leafOf
+    τ FrP = leafType
 
-    fr-η : IdP I ⇛ FrP
-    fr-η = record { 
-             γ-map = λ i c → leaf i ; 
-             ρ-eqv = λ i c → id-equiv ⊤ ;
-             τ-coh = λ i c p → idp
-           }
+    fr-η : IdP I ⇝ FrP
+    γ-map fr-η _ = leaf _
+    ρ-eqv fr-η = ide _
+    τ-coh fr-η p = idp
 
-    {-# TERMINATING #-}
-    fr-graft : (i : I) → γ (FrP ⊚ FrP) i → γ FrP i
-    fr-graft i (leaf .i , ψ) = ψ tt
-    fr-graft i (node .i (c , φ) , ψ) = 
-      node i (c , (λ p₀ → fr-graft (τ P ((i , c) , p₀)) (φ p₀ , (λ p₁ → ψ (p₀ , p₁)))))
+    fr-Η : P ⇝ FrP
+    γ-map fr-Η = corolla
+    ρ-eqv fr-Η = (Σ₂-LUnit)⁻¹
+    τ-coh fr-Η p = idp
 
-    {-# TERMINATING #-}
-    fr-place-eqv : (i : I) (c : γ (FrP ⊚ FrP) i) → ρ (FrP ⊚ FrP) (i , c) ≃ ρ FrP (i , fr-graft i c)
-    fr-place-eqv i (leaf .i , ψ) = Σ-eqv-base (ρ FrP (i , (ψ tt)))
-    fr-place-eqv i (node .i (c , φ) , ψ) = 
-      Σ-eqv-inv (ρ P (i , c)) _ _ (λ p → fr-place-eqv (τ P ((i , c) , p)) (φ p , (λ p₀ → ψ (p , p₀)))) ⊙ (Σ-eqv-lift _ _ _)
+    fr-P : FrP ⊚ P ⇝ FrP
+    γ-map fr-P (c , φ) = node (c , φ)
+    ρ-eqv fr-P {c = c , φ} = ide _
+    τ-coh fr-P p = idp
 
     {-# TERMINATING #-}
-    fr-type-coh : (i : I) (c : γ (FrP ⊚ FrP) i) (p : ρ (FrP ⊚ FrP) (i , c)) →
-                  τ (FrP ⊚ FrP) ((i , c) , p) ==
-                  τ FrP ((i , fr-graft i c) , f (fr-place-eqv i c) p)
-    fr-type-coh i (leaf .i , ψ) (p₀ , p₁) = idp
-    fr-type-coh i (node .i (c , φ) , ψ) ((p , l₀) , l₁) = 
-      leafType l₁ =⟨ fr-type-coh (τ P ((i , c) , p)) (φ p , (λ p₀ → ψ (p , p₀))) (l₀ , l₁)  ⟩ 
-      leafType (f (fr-place-eqv (τ P ((i , c) , p)) (φ p , (λ p₀ → ψ (p , p₀)))) (l₀ , l₁)) ∎
-  
-    fr-μ : FrP ⊚ FrP ⇛ FrP
-    fr-μ = record { 
-             γ-map = fr-graft ; 
-             ρ-eqv = fr-place-eqv ; 
-             τ-coh = fr-type-coh 
-           }
+    fr-fix : {Q : Poly I I} (α : Q ⊚ P ⇝ Q) → Q ⊚ FrP ⇝ Q
+    γ-map (fr-fix α) (leaf i , ψ) = ψ lt
+    γ-map (fr-fix α) (node (c , φ) , ψ) = ⟪ α ⟫ (c , (λ p₀ → γ-map (fr-fix α) (φ p₀ , (λ p₁ → ψ (p₀ , p₁)))))
+    ρ-eqv (fr-fix α) {c = leaf ._ , ψ} = Σ₁-LUnit
+    ρ-eqv (fr-fix α) {c = node (c , φ) , ψ} = ⟪ α ⟫≃ ∘e equiv-Σ-snd (λ p → ρ-eqv (fr-fix α)) ∘e Σ-assoc
+    τ-coh (fr-fix α) {c = leaf ._ , ψ} p = idp
+    τ-coh (fr-fix α) {c = node (c , φ) , ψ} ((p , l) , q) = τ-coh (fr-fix α) (l , q) ∙ ⟪ α ⟫↓= (p , –> (ρ-eqv (fr-fix α)) (l , q))
 
-    open UnitLemmas FrP fr-η
-    open AssocLemmas FrP fr-μ
+    fr-μ : FrP ⊚ FrP ⇝ FrP
+    fr-μ = fr-fix fr-P
 
-    fr-unit-leaf-law : {i : I} (c : γ FrP i) → mult (unit-leaf-decor c) == c
-    fr-unit-leaf-law (leaf i) = idp
-    fr-unit-leaf-law (node i (c , φ)) = ap (λ φ₀ → node i (c , φ₀)) (funext IH)
+    -- test : {Q R : Poly I I} (α : Q ⊚ P ⇝ Q) → poly-id R ∥ fr-fix α ≈ (⊚-assoc-l R Q FrP ▶ fr-fix (⊚-assoc-r R Q P ▶ (poly-id R ∥ α)))
+    -- test {Q} {R} α = {!!}
 
-      where IH : (p : ρ P (_ , c)) → mult (unit-leaf-decor (φ p)) == φ p
-            IH p = fr-unit-leaf-law (φ p)
+    -- mod-assoc : {Q : Poly I I} (α : Q ⊚ P ⇝ Q) → ⊚-assoc-r Q FrP FrP ▶ (poly-id Q ∥ fr-μ) ▶ fr-fix α ≈ (fr-fix α ∥ poly-id FrP) ▶ fr-fix α
+    -- γ≈ (mod-assoc α (leaf i , ψ)) = idp
+    -- γ≈ (mod-assoc {Q} α (node (c , φ) , ψ)) = {!!}
 
-    fr-unit-root-law : {i : I} (c : γ FrP i) → mult (unit-root-decor c) == c
-    fr-unit-root-law (leaf i) = idp
-    fr-unit-root-law (node i (c , φ)) = idp
+    --   where IH : (p : ρ P c) → ⟪ ⊚-assoc-r Q FrP FrP ▶ (poly-id Q ∥ fr-μ) ▶ fr-fix α ⟫ (φ p , (λ p₁ → ψ (p , p₁))) ==
+    --                             ⟪ (fr-fix α ∥ poly-id FrP) ▶ fr-fix α ⟫ (φ p , (λ p₁ → ψ (p , p₁)))
+    --         IH p = γ≈ (mod-assoc α (φ p , (λ p₁ → ψ (p , p₁)))) 
 
-    module _ {i : I} {c : γ P i}
-      (φ : (p : ρ P (i , c)) → W P (τ P (_ , p)))
-      (ψ : (p : leafOf (node i (c , φ))) → γ (FrP ⊚ FrP) (τ FrP (_ , p)))
-      (p₀ : ρ P (_ , c)) (l : leafOf (mult (φ p₀ , (λ p₁ → proj₁ (ψ (p₀ , p₁)))))) where
+    -- ρ≈ (mod-assoc α c) p = {!!}
+    -- τ≈ (mod-assoc α c) p = {!!}
 
-      d : γ (FrP ⊚ FrP) _
-      d = (φ p₀ , (λ p₁ → proj₁ (ψ (p₀ , p₁))))
-        
-      -- Anyone?
-      postulate
-        main-lemma : transport (W P) (lift-place-coh {d = d} l) (proj₂ (ψ (p₀ , proj₁ (lift-place l))) (proj₂ (lift-place {d = d} l))) == 
-                     induced-decor (proj₂ (decor-assoc-right i (_ , ψ))) (p₀ , l) 
+    -- Any polynomial with a "unit" and "multiplication" admits a map from FrP
+    -- fr-univ : {Q : Poly I I} (η₀ : IdP I ⇝ Q) (μ₀ : Q ⊚ P ⇝ Q) → FrP ⇝ Q
+    -- fr-univ {Q} η₀ μ₀ = ⊚-unit-l FrP ▶ (η₀ ∥ poly-id FrP) ▶ fr-fix μ₀
 
+    open ADMIT
 
-    {-# TERMINATING #-}
-    fr-assoc-law : {i : I} (c : γ (FrP ⊚ FrP ⊚ FrP) i) →
-                   mult (mult-left c) == mult (mult-right (decor-assoc-right i c))
-    fr-assoc-law (leaf i , ψ) = idp
-    fr-assoc-law (node i (c , φ) , ψ) =
-      mult (mult-left (node i (c , φ) , ψ))                                                                                                        =⟨ idp ⟩ 
-      mult (node i (c , φ) , λ p → mult (ψ p))                                                                                                     =⟨ idp ⟩ 
-      node i (c , λ p₀ → mult (φ p₀ , λ p₁ → mult (ψ (p₀ , p₁))))                                                                                  =⟨ idp ⟩
-      node i (c , λ p₀ → mult (mult-left (φ p₀ , (λ p₁ → ψ (p₀ , p₁)))))                                                                           =⟨ funext IH |in-ctx (λ φ₀ → node i (c , φ₀)) ⟩ 
-      node i (c , λ p₀ → mult (mult-right (decor-assoc-right _ (φ p₀ , (λ p₁ → ψ (p₀ , p₁))))))                                                    =⟨ idp ⟩ 
-      node i (c , λ p₀ → mult (mult-right ((φ p₀ , (λ p₁ → proj₁ (ψ (p₀ , p₁)))) , (λ { (p₁ , p₂) → proj₂ (ψ (p₀ , p₁)) p₂ }))))                   =⟨ idp ⟩ 
-      node i (c , λ p₀ → mult (mult (φ p₀ , (λ p₁ → proj₁ (ψ (p₀ , p₁)))) , induced-decor (λ { (p₁ , p₂) → proj₂ (ψ (p₀ , p₁)) p₂ })))             =⟨ funext lemma₀ |in-ctx (λ φ₀ → node i (c , φ₀))⟩ 
-      node i (c , λ p₀ → mult (mult (φ p₀ , (λ p₁ → proj₁ (ψ (p₀ , p₁)))) , ((λ q → (induced-decor (λ { (p₀ , p₁) → proj₂ (ψ p₀) p₁ })) (p₀ , q))) )) =⟨ idp ⟩ 
-      mult (node i (c , λ p₀ → mult (φ p₀ , (λ p₁ → proj₁ (ψ (p₀ , p₁))))) , induced-decor (λ { (p₀ , p₁) → proj₂ (ψ p₀) p₁ }))                       =⟨ idp ⟩ 
-      mult (mult (node i (c , φ) , (λ p → proj₁ (ψ p))) , induced-decor (λ { (p₀ , p₁) → proj₂ (ψ p₀) p₁ }))                                          =⟨ idp ⟩ 
-      mult (mult-right ((node i (c , φ) , (λ p → proj₁ (ψ p))) , (λ { (p₀ , p₁) → proj₂ (ψ p₀) p₁ }) ))                                             =⟨ idp ⟩ 
-      mult (mult-right (decor-assoc-right i (node i (c , φ) , ψ))) ∎
+    fr-η-left-law : ⊚-unit-l FrP ▶ (fr-η ∥ poly-id FrP) ▶ fr-μ ≈ poly-id FrP
+    γ≈ (fr-η-left-law (leaf i)) = idp 
+    γ≈ (fr-η-left-law (node (c , δ))) = 
+      ⟪ ⊚-unit-l FrP ▶ (fr-η ∥ poly-id FrP) ▶ fr-μ ⟫ (node (c , δ))               =⟨ idp ⟩ 
+      ⟪ (fr-η ∥ poly-id FrP) ▶ fr-μ ⟫ (⟪ ⊚-unit-l FrP ⟫ (node (c , δ)))           =⟨ idp ⟩ 
+      ⟪ (fr-η ∥ poly-id FrP) ▶ fr-μ ⟫ (node (c , δ) , (λ x → lift unit))         =⟨ idp ⟩            
+      ⟪ fr-μ ⟫ (⟪ fr-η ∥ poly-id FrP ⟫ (node (c , δ) , (λ x → lift unit)))        =⟨ idp ⟩ 
+      ⟪ fr-μ ⟫ (node (c , δ) , (λ q → leaf (leafType (snd q))))                          =⟨ idp ⟩ 
+      node (c , (λ p₀ → γ-map (fr-fix fr-P) (δ p₀ , (λ p₁ → leaf (leafType p₁)))))      =⟨ idp ⟩ 
+      node (c , (λ p₀ → ⟪ ⊚-unit-l FrP ▶ (fr-η ∥ poly-id FrP) ▶ fr-μ ⟫ (δ p₀)))          =⟨ f-lemma |in-ctx (λ x → node (c , x)) ⟩ 
+      node (c , δ)                                                                        =⟨ idp ⟩ 
+      ⟪ poly-id FrP ⟫ (node (c , δ)) ∎
 
-      where IH : (p : ρ P (i , c)) → mult (mult-left (φ p , (λ p₁ → ψ (p , p₁)))) == 
-                                     mult (mult-right (decor-assoc-right (τ P ((i , c) , p)) (φ p , (λ p₁ → ψ (p , p₁)))))
-            IH p = fr-assoc-law (φ p , (λ p₁ → ψ (p , p₁)))
+        where IH : (p : ρ P c) → ⟪ ⊚-unit-l FrP ▶ (fr-η ∥ poly-id FrP) ▶ fr-μ ⟫ (δ p) == ⟪ poly-id FrP ⟫ (δ p)
+              IH p = γ≈ (fr-η-left-law (δ p))
 
-            lemma : (p₀ : ρ P (i , c)) → induced-decor (λ { (p₁ , p₂) → proj₂ (ψ (p₀ , p₁)) p₂ }) == 
-                                         (λ q → (induced-decor (λ { (p₀ , p₁) → proj₂ (ψ p₀) p₁ })) (p₀ , q))
-            lemma p₀ = 
-              induced-decor (λ { (p₁ , p₂) → proj₂ (ψ (p₀ , p₁)) p₂ }) =⟨ funext (main-lemma φ ψ p₀) ⟩ 
-              (λ q → (induced-decor (λ { (p₀ , p₁) → proj₂ (ψ p₀) p₁ })) (p₀ , q)) ∎
+              f-lemma : (λ p₀ → ⟪ ⊚-unit-l FrP ▶ (fr-η ∥ poly-id FrP) ▶ fr-μ ⟫ (δ p₀)) == δ
+              f-lemma = λ= (λ p → IH p)
 
-            lemma₀ : (p₀ : ρ P (i , c)) → mult (mult (φ p₀ , (λ p₁ → proj₁ (ψ (p₀ , p₁)))) , induced-decor (λ { (p₁ , p₂) → proj₂ (ψ (p₀ , p₁)) p₂ })) ==
-                                          mult (mult (φ p₀ , (λ p₁ → proj₁ (ψ (p₀ , p₁)))) , ((λ q → (induced-decor (λ { (p₀ , p₁) → proj₂ (ψ p₀) p₁ })) (p₀ , q))))
-            lemma₀ p₀ = ap (λ X → mult (mult (φ p₀ , (λ p₁ → proj₁ (ψ (p₀ , p₁)))) , X)) (lemma p₀) 
+    ρ≈ (fr-η-left-law c) p = {!!}
+    τ≈ (fr-η-left-law c) p = {!!}
+
+    -- -- The right law is definitional 
+    -- fr-η-right-law : ⊚-unit-r FrP ▶ (poly-id FrP ∥ fr-η) ▶ fr-μ ≈ poly-id FrP
+    -- γ≈ (fr-η-right-law c) = idp
+    -- ρ≈ (fr-η-right-law c) p = idp
+    -- τ≈ (fr-η-right-law c) p = idp
+
+    -- fr-μ-assoc-law : ⊚-assoc-r FrP FrP FrP ▶ (poly-id FrP ∥ fr-μ) ▶ fr-μ ≈ (fr-μ ∥ poly-id FrP) ▶ fr-μ
+    -- fr-μ-assoc-law = ADMIT
 
     FrM : PolyMonad I
-    FrM = record { 
-            P = FrP ;
-            η = fr-η ;
-            μ = fr-μ ;
-            unit-leaf-law = fr-unit-leaf-law ;
-            unit-root-law = fr-unit-root-law ;
-            assoc-law = fr-assoc-law
-           }
+    MP FrM = FrP
+    η FrM = fr-η
+    μ FrM = fr-μ
+    η-left-law FrM = ADMIT
+    η-right-law FrM = ADMIT
+    μ-assoc-law FrM = ADMIT
 
-  module _ where
+    -- fr-fix-unit : {Q : Poly I I} (α : Q ⊚ P ⇝ Q) → (poly-id Q ∥ fr-η) ▶ fr-fix α ≈ ⊚-unit-inv-r Q
+    -- fr-fix-unit {Q} α c = leq idp (λ p → idp) (λ p → idp)
 
-    Fp : ℕ → Poly ⊤ ⊤
-    Fp n = record { 
-             γ = λ { tt → ⊤ } ; 
-             ρ = λ { (tt , tt) → Fin n } ; 
-             τ = λ _ → tt 
-           }
+    -- fr-fix-mult : {Q : Poly I I} (α : Q ⊚ P ⇝ Q) → (poly-id Q ∥ fr-P) ▶ fr-fix α ≈ ⊚-assoc-l Q FrP P ▶ (fr-fix α ∥ poly-id P) ▶ α 
+    -- fr-fix-mult {Q} α c = leq idp (λ p → idp ) lemma
+    
+    --   where lemma : (p : ρ (Q ⊚ FrP ⊚ P) c) →
+    --                 ⟪ (poly-id Q ∥ fr-P) ▶ fr-fix α ⟫↓= p ==
+    --                 ⟪ ⊚-assoc-l Q FrP P ▶ (fr-fix α ∥ poly-id P) ▶ α ⟫↓= p
+    --         lemma ((p , l) , q) = 
+    --           ⟪ fr-fix α ⟫↓= (l , q) ∙ ⟪ α ⟫↓= (p , (⟪ fr-fix α ⟫↓ ((l , q)))) 
+    --             =⟨ ! (∙-unit-r (⟪ fr-fix α ⟫↓= (l , q))) |in-ctx (λ x → x ∙ ⟪ α ⟫↓= (p , (⟪ fr-fix α ⟫↓ ((l , q))))) ⟩ 
+    --           (⟪ fr-fix α ⟫↓= (l , q) ∙ idp) ∙ ⟪ α ⟫↓= (p , (⟪ fr-fix α ⟫↓ ((l , q)))) 
+    --             =⟨ ! (ap-idf (⟪ fr-fix α ⟫↓= (l , q) ∙ idp)) |in-ctx (λ x → x ∙ ⟪ α ⟫↓= (p , (⟪ fr-fix α ⟫↓ ((l , q))))) ⟩ 
+    --           ap (λ i → i) (⟪ fr-fix α ⟫↓= (l , q) ∙ idp) ∙ ⟪ α ⟫↓= (p , (⟪ fr-fix α ⟫↓ ((l , q)))) ∎
 
-    F : ℕ → PolyMonad ⊤ 
-    F n = let open FreeM ⊤ (Fp n) in FrM
+    -- fr-unique : {Q : Poly I I} {α β : FrP ⇝ Q} → 
+    --             fr-η ▶ α ≈ fr-η ▶ β →
+    --             fr-P ▶ α ≈ fr-P ▶ β → 
+    --             α ≈ β
+    -- fr-unique η-eq μ-eq (leaf i) = leq (γ≈ (η-eq lt)) (ρ≈ (η-eq lt)) (τ≈ (η-eq lt))
+    -- fr-unique η-eq μ-eq (node (c , φ)) = leq (γ≈ (μ-eq (c , φ))) (ρ≈ (μ-eq (c , φ))) (τ≈ (μ-eq (c , φ)))
+
+    -- fr-η-left-law : ⊚-unit-l FrP ▶ (fr-η ∥ poly-id FrP) ▶ fr-μ ≈ poly-id FrP
+    -- fr-η-left-law (leaf i) = leq idp (λ p → idp) (λ p → idp)
+    -- fr-η-left-law (node (c , φ)) = leq γ-eq ρ-eq τ-eq 
+    
+    --   where IH : (p : ρ P c) → ⊚-unit-l FrP ▶ (fr-η ∥ poly-id FrP) ▶ fr-μ ≈ poly-id FrP ↓ (φ p)
+    --         IH p = fr-η-left-law (φ p)
+
+    --         γ-eq : ⟪ ⊚-unit-l FrP ▶ (fr-η ∥ poly-id FrP) ▶ fr-μ ⟫ (node (c , φ))
+    --                == ⟪ poly-id FrP ⟫ (node (c , φ))
+    --         γ-eq = ↓-W-node-lcl-in (γ≈ ∘ IH)
+
+    --         ρ-eq : (p : ρ FrP (node (c , φ))) →
+    --                (⟪ ⊚-unit-l FrP ▶ (fr-η ∥ poly-id FrP) ▶ fr-μ ⟫↓ p) == 
+    --                (⟪ poly-id FrP ⟫↓ p) [ ρ FrP ↓ γ-eq ]
+    --         ρ-eq (p , l) = ↓-leaf-lcl-in (γ≈ ∘ IH) (ρ≈ (IH p) l)
+
+    --         τ-eq : (p : ρ FrP (node (c , φ))) →
+    --                (⟪ ⊚-unit-l FrP ▶ (fr-η ∥ poly-id FrP) ▶ fr-μ ⟫↓= p) ==
+    --                (⟪ poly-id FrP ⟫↓= p) [ (λ cp → (τ FrP p) == τ FrP (snd cp)) ↓ (pair= γ-eq (ρ-eq p)) ]
+    --         τ-eq (p , l) = {!!}
+
+    --           where test : ⟪ ⊚-unit-l FrP ▶ (fr-η ∥ poly-id FrP) ▶ fr-μ ⓐ node (c , φ) ⟫↓= (p , l) == {!!}
+    --                 test = {!!}
+
+    --                 ih : (⟪ ⊚-unit-l FrP ▶ (fr-η ∥ poly-id FrP) ▶ fr-μ ⟫↓= l) == 
+    --                      (⟪ poly-id FrP ⟫↓= l) [ (λ cp → τ FrP l == τ FrP (snd cp)) ↓ (pair= (γ≈ (fr-η-left-law (φ p))) (ρ≈ (IH p) l)) ]
+    --                 ih = τ≈ (IH p) l
+
+    -- Here is the identity which you seem to need to 
+    -- complete the proof.  It is the exact analog of the
+    -- decoration lemma you had before.  I would still like
+    -- to see this fit nicer into a general scheme ...
+    
+    -- fr-fix-mult : {Q : Poly I I} (α : Q ⊚ P ⇝ Q) → (poly-id Q ∥ fr-P) ▶ fr-fix α ≈ ⊚-assoc-l Q FrP P ▶ (fr-fix α ∥ poly-id P) ▶ α 
+    -- fr-fix-mult {Q} α c = leq idp (λ p → idp ) lemma
+
+
+    -- COMPARE:
+    -- (poly-id Q ∥ fr-P) ▶ fr-fix α ≈ 
+    -- ⊚-assoc-l Q FrP P ▶ (fr-fix α ∥ poly-id P) ▶ α 
+
+    -- unroll : (poly-id (FrP ⊚ FrP) ∥ fr-P) ▶ ⊚-assoc-r FrP FrP FrP ▶ (poly-id FrP ∥ fr-μ) ▶ fr-μ ≈
+    --          ⊚-assoc-l (FrP ⊚ FrP) FrP P ▶ ((⊚-assoc-r FrP FrP FrP ▶ (poly-id FrP ∥ fr-μ) ▶ fr-μ) ∥ poly-id P) ▶ fr-P
+    -- unroll = ADMIT
+
+    -- {-# TERMINATING #-}
+    -- fr-μ-assoc-law : ⊚-assoc-r FrP FrP FrP ▶ (poly-id FrP ∥ fr-μ) ▶ fr-μ ≈ (fr-μ ∥ poly-id FrP) ▶ fr-μ
+    -- fr-μ-assoc-law (leaf i , ψ) = leq idp (λ p → idp) ADMIT
+    -- fr-μ-assoc-law (node (c , φ) , ψ) = leq γ-eq ρ-eq ADMIT
+
+    --   where γ-eq : ⟪ ⊚-assoc-r FrP FrP FrP ▶ (poly-id FrP ∥ fr-μ) ▶ fr-μ ⟫ (node (c , φ) , ψ) ==
+    --                ⟪ (fr-μ ∥ poly-id FrP) ▶ fr-μ ⟫ (node (c , φ) , ψ)
+    --         γ-eq = γ≈ (unroll ((c , φ) , ψ)) ∙ ↓-W-node-lcl-in (λ p → γ≈ (fr-μ-assoc-law (φ p , λ p₁ → ψ (p , p₁))))
+
+    --         ρ-eq : (p : ρ ((FrP ⊚ FrP) ⊚ FrP) (node (c , φ) , ψ)) →
+    --                ⟪ ⊚-assoc-r FrP FrP FrP ▶ (poly-id FrP ∥ fr-μ) ▶ fr-μ ⟫↓ p ==
+    --                ⟪ (fr-μ ∥ poly-id FrP) ▶ fr-μ ⟫↓ p [ ρ FrP ↓ γ-eq ]
+    --         ρ-eq p = ?
+
+    --           -- where dec₀ : ⟦ P ⟧⟦ c ≺ γ FrP ⟧
+    --           --       dec₀ p = ⟪ ⊚-assoc-r FrP FrP FrP ▶ (poly-id FrP ∥ fr-μ) ▶ fr-μ ⟫ (φ p , λ p₁ → ψ (p , p₁))
+
+    --           --       dec₁ : ⟦ P ⟧⟦ c ≺ γ FrP ⟧
+    --           --       dec₁ p = ⟪ (fr-μ ∥ poly-id FrP) ▶ fr-μ ⟫ (φ p , λ p₁ → ψ (p , p₁))
+
+    --           --       IH : dec₀ == dec₁
+    --           --       IH = λ= (λ p → γ≈ (fr-μ-assoc-law (φ p , λ p₁ → ψ (p , p₁))))
+
+    --                 -- bleep : γ (FrP ⊚ P) _
+    --                 -- bleep = ⟪ ⊚-assoc-l (FrP ⊚ FrP) FrP P ▶ ((⊚-assoc-r FrP FrP FrP ▶ (poly-id FrP ∥ fr-μ) ▶ fr-μ) ∥ poly-id P) ⟫ ((c , φ) , ψ)
+    --                 -- -- (FrP ⊚ FrP) ⊚ (FrP ⊚ P) ⇝ ((FrP ⊚ FrP) ⊚ FrP) ⊚ P ⇝ (FrP ⊚ (FrP ⊚ FrP)) ⊚ P ⇝ (FrP ⊚ FrP) ⊚ P ⇝ FrP ⊚ P
+                    
+    --                 -- blorp : γ (FrP ⊚ P) _
+    --                 -- blorp = ⟪ ⊚-assoc-l (FrP ⊚ FrP) FrP P ▶ (((fr-μ ∥ poly-id FrP) ▶ fr-μ) ∥ poly-id P) ⟫ ((c , φ) , ψ)
+
+    --                 -- fullIH : bleep == blorp
+    --                 -- fullIH = pair= idp IH
+
+    --               --   res₀ : ⟦ P ⟧⟦ c ≺ γ FrP ⟧
+    --               --   res₀ p = ⟪ fr-μ ⟫ (⟪ fr-μ ⟫ (φ p , λ p₁ → fst (ψ (p , p₁))) , 
+    --               --     (λ p₁ → ⟪ poly-id FrP ∣ fr-μ ⟫⇕ (λ pp → snd (ψ (fst pp)) (snd pp)) (p , p₁)))
+    --               --     --(λ p₁ → ⟪ poly-id FrP ∣ fr-μ ⟫⇕ (snd (⟪ ⊚-assoc-r FrP FrP FrP ⟫ (node (c , φ) , ψ))) (p , p₁)))
+
+    --               -- -- ⊚-assoc-r (c , φ) = (c , (λ p → fst (φ p))) , (λ pp → snd (φ (fst pp)) (snd pp))
+    --               -- -- ⊚-assoc-l ((c , φ) , ψ) = (c , (λ p → (φ p , (λ q → ψ (p , q)))))
+    --               -- -- (α ∥ β) (c , φ) = (⟪ β ⟫ c , ⟪ α ∣ β ⟫⇕ φ) 
+    --               -- -- (poly-id Q ∥ fr-P) ▶ fr-fix α ≈ ⊚-assoc-l Q FrP P ▶ (fr-fix α ∥ poly-id P) ▶ α 
+
+    --               --   res₁ : ⟦ P ⟧⟦ c ≺ γ FrP ⟧
+    --               --   res₁ p = ⟪ fr-μ ⟫ (φ p , (λ p₁ → ⟪ fr-μ ∣ poly-id FrP ⟫⇕ ψ (p , p₁)))
+    --               --   --dec₁ p = ⟪ (fr-μ ∥ poly-id FrP) ▶ fr-μ ⟫ (φ p , λ p₁ → ψ (p , p₁))
+                  
+    --               --   finale : res₀ == res₁
+    --               --   finale = {!γ≈ (unroll ((c , φ) , ψ))!}
+
+    --               --   maybe : (p : ρ P c) → res₁ p == dec₁ p
+    --               --   maybe p = idp
+
 

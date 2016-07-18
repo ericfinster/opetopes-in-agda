@@ -1,98 +1,62 @@
---
---  PullbackMonad.agda - The pullback of a polynomial monad
---
---  Eric Finster
---
+{-# OPTIONS --without-K #-}
 
-open import Prelude
-open import Polynomial
-open import PolynomialMonad
+open import HoTT
 
-module PullbackMonad where
+open import opetopes.Polynomial
+open import opetopes.CartesianMorphism
+open import opetopes.PolynomialMonad
+open import opetopes.PolyMisc
 
-  module Pullback {I : Set} (X : I → Set) (M : PolyMonad I) where
+module opetopes.PullbackMonad where
+
+  module _ {ℓ} {I : Set ℓ} (X : I → Set ℓ) (M : PolyMonad I) where
   
     open PolyMonad 
-    open Poly
-    open _⇛_
-    open _≃_
 
-    PM : Poly I I
-    PM = P M
+    T : Set ℓ
+    T = Σ I X
 
-    ηM : IdP I ⇛ PM
-    ηM = η M
+    PbP : Poly T T
+    γ PbP (i , x) = ⟦ P M ⟧ X i
+    ρ PbP (c , φ) = ρ (P M) c
+    τ PbP {c = c , φ} p = τ (P M) p , φ p
 
-    μM : PM ⊚ PM ⇛ PM
-    μM = μ M
+    π-pb : ⟦ fst ∣ fst ⟧⟦ PbP ⇒ (P M) ⟧
+    γ-map π-pb (c , φ) = c
+    ρ-eqv π-pb = ide _
+    τ-coh π-pb p = idp
 
-    J : Set
-    J = Σ I X
+    -- pb-η : IdP T ⇝ PbP
+    -- γ-map pb-η {j = i , x} _ = (⟪ η M ⟫ lt , ⟪ η M ∣ X ⟫⇓ (cst x))
+    -- ρ-eqv pb-η = ⟪ η M ⟫≃
+    -- τ-coh pb-η {j = i , x} p = pair= (⟪ η M ⟫↓= lt) (⟪ η M ∣ X ⟫⇓-coh (cst x) lt)
 
-    PbP : Poly J J
-    PbP = record { 
-      γ = λ { (i , x) → ⟦ PM ⟧ X i } ; 
-      ρ = λ { ((i , x) , (c , φ)) → ρ PM (i , c) } ; 
-      τ = λ { (((i , x) , c , φ) , p) → (τ PM ((i , c) , p)) , (φ p) } }
+    -- pb-μ : PbP ⊚ PbP ⇝ PbP
+    -- γ-map pb-μ ((c , φ) , ψ) = (⟪ μ M ⟫ (c , fst ∘ ψ) , ⟪ μ M ∣ X ⟫⇓ (λ { (p₀ , p₁) → snd (ψ p₀) p₁ }))
+    -- ρ-eqv pb-μ {c = (c , φ) , ψ} = ⟪ μ M ⟫≃
+    -- τ-coh pb-μ {c = (c , φ) , ψ} (p₀ , p₁) = pair= (⟪ μ M ⟫↓= (p₀ , p₁)) (⟪ μ M ∣ X ⟫⇓-coh (λ { (p₀ , p₁) → snd (ψ p₀) p₁ }) (p₀ , p₁))
 
-    pb-η : IdP J ⇛ PbP
-    pb-η = record { 
-      γ-map = λ { (i , x) tt → unit-cons i x } ; 
-      ρ-eqv = λ { (i , x) tt → ρ-eqv ηM i tt } ; 
-      τ-coh = λ { (i , x) tt tt → type-coh i x } }
+    -- open ADMIT
 
-      where open UnitLemmas PM ηM
+    -- pb-η-left-law : ⊚-unit-l PbP ▶ (pb-η ∥ poly-id PbP) ▶ pb-μ ≈ poly-id PbP
+    -- pb-η-left-law = ADMIT
 
-            unit-cons : (i : I) (x : X i) → γ PbP (i , x)
-            unit-cons i x = (unit-at i , (λ p → transport! X (unit-place-type-coh p) x))
+    -- pb-η-right-law : ⊚-unit-r PbP ▶ (poly-id PbP ∥ pb-η) ▶ pb-μ ≈ poly-id PbP
+    -- pb-η-right-law = ADMIT
 
-            -- should be provable without K, but I doubt the multiplication case will be ...
-            type-coh : (i : I) (x : X i) → (i , x) == τ PbP (((i , x) , unit-cons i x) , unit-place-at i)
-            type-coh i x = 
-              (i , x) =⟨ Σ-transport! (unit-type-coh i) ⟩ 
-              (τ PM ((i , unit-at i) , unit-place-at i) , transport! X (unit-type-coh i) x) 
-                =⟨ transport!-coh X (unit-K i) x |in-ctx (λ x₀ → (τ PM ((i , unit-at i) , unit-place-at i) , x₀)) ⟩ 
-              (τ PM ((i , unit-at i) , unit-place-at i) , transport! X (unit-place-type-coh (unit-place-at i)) x) =⟨ idp ⟩ 
-              τ PbP (((i , x) , unit-cons i x) , ρ-map ηM tt tt) ∎ 
+    -- pb-μ-assoc-law : ⊚-assoc-r PbP PbP PbP ▶ (poly-id PbP ∥ pb-μ) ▶ pb-μ ≈ (pb-μ ∥ poly-id PbP) ▶ pb-μ
+    -- pb-μ-assoc-law = ADMIT
 
-    -- module _ where
+    -- PbM : PolyMonad T 
+    -- P PbM = PbP
+    -- η PbM = pb-η
+    -- μ PbM = pb-μ
+    -- η-left-law PbM = pb-η-left-law
+    -- η-right-law PbM = pb-η-right-law
+    -- μ-assoc-law PbM = pb-μ-assoc-law
 
-    --   open AssocLemmas PM μM
+  -- -- Using the pullback, we can define maps of monads over a given fibration
+  -- PolyMapOver : ∀ {ℓ} {I : Type ℓ} (X : I → Type ℓ) (M : PolyMonad (Σ I X)) (N : PolyMonad I) → Type ℓ 
+  -- PolyMapOver X M N = PolyMonadMap M (PbM X N)
 
-    --   pb-mult : (j : J) → γ (PbP ⊚ PbP) j → γ PbP j
-    --   pb-mult (i , x) ((c , φ) , ψ) = (mult (c , (λ p → proj₁ (ψ p)))) , (λ p → {!φ (proj₁ (lift-place p))!})
 
-    postulate
-
-      pb-mult : (j : J) → γ (PbP ⊚ PbP) j → γ PbP j
-      pb-place-eqv : (i : J) (c : γ (PbP ⊚ PbP) i) → ρ (PbP ⊚ PbP) (i , c) ≃ ρ PbP (i , pb-mult i c)
-      pb-type-coh : (i : J) (c : γ (PbP ⊚ PbP) i) (p : ρ (PbP ⊚ PbP) (i , c)) → τ (PbP ⊚ PbP) ((i , c) , p) ==
-                    τ PbP ((i , pb-mult i c) , f (pb-place-eqv i c) p)
-
-    pb-μ : PbP ⊚ PbP ⇛ PbP
-    pb-μ = record { 
-      γ-map = pb-mult ; 
-      ρ-eqv = pb-place-eqv ; 
-      τ-coh = pb-type-coh }
-
-    open UnitLemmas PbP pb-η
-    open AssocLemmas PbP pb-μ
-
-    postulate
-
-      -- Not sure why the implicit argument resolution seems to not work here ...
-      pb-unit-leaf-law : {j : J} (c : γ PbP j) → mult {j} (unit-leaf-decor {j} c) == c
-      pb-unit-root-law : {j : J} (c : γ PbP j) → mult {j} (unit-root-decor {j} c) == c
-
-      pb-assoc-law : {j : J} (c : γ (PbP ⊚ PbP ⊚ PbP) j) → 
-                     mult {j} (mult-left {j} c) == mult {j} (mult-right {j} (decor-assoc-right j c))
-
-    PbM : PolyMonad J
-    PbM = record
-            { P = PbP
-            ; η = pb-η
-            ; μ = pb-μ
-            ; unit-leaf-law = λ {j} c → pb-unit-leaf-law {j} c
-            ; unit-root-law = λ {j} c → pb-unit-root-law {j} c
-            ; assoc-law = λ {j} c → pb-assoc-law {j} c
-            }
