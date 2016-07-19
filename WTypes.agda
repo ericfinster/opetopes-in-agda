@@ -45,6 +45,12 @@ module _ {ℓ} {I : Type ℓ} {P : Poly I I} where
       W-adj (leaf i) = idp
       W-adj (node x) = idp
 
+  {-# TERMINATING #-}
+  W-preserves-level : (γ-set : (i : I) → is-set (γ P i)) → 
+                      (i : I) → is-set (W P i)
+  W-preserves-level γ-set i = equiv-preserves-level ((W-equiv {i}) ⁻¹) 
+    (⊔-level Unit-has-level (Σ-level (γ-set i) (λ c → Π-level (λ p → W-preserves-level γ-set (τ P p)))))
+
   ↓-W-leaf-in : {i₀ i₁ : I} {q : i₀ == i₁}
              → leaf i₀ == leaf i₁ [ W P ↓ q ]
   ↓-W-leaf-in {q = idp} = idp
