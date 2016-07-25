@@ -11,13 +11,12 @@ data W {ℓ} {I : Type ℓ} (P : Poly I I) : I → Type ℓ where
   node : {i : I} → ⟦ P ⟧ (W P) i → W P i
 
 module _ {ℓ} {I : Type ℓ} {P : Poly I I} where
-
---  W-ind : ∀ {ℓ′} (C : (Σ I (W P)) → Type ℓ′)
---       → (∀ {i}                                        → C (i , leaf i ))
---       → (∀ {i} (ps : ⟦ P ⟧ (W P) i) → □ P C (i , ps) → C (i , node ps))
---       → ∀ {i} (w : W P i) → C (i , w)
---  W-ind C ψl ψn (leaf i) = ψl
---  W-ind C ψl ψn (node (c , φ)) = ψn (c , φ) (λ p → W-ind C ψl ψn (φ p))
+  node-lcl-inj : ∀ {i : I} {c : γ P i} {φ φ′ : ⟦ P ⟧⟦ c ≺ W P ⟧}
+           → node (c , φ) == node (c , φ′)
+           → φ == φ′
+  node-lcl-inj {i} {c} {φ} {φ′} p = {!!}
+    where lemma : (c , φ) == (c , φ′)
+          lemma = {!!}
 
   W-unroll : {i : I} → W P i → ⊤ ⊔ ⟦ P ⟧ (W P) i
   W-unroll (leaf i) = inl unit
@@ -67,7 +66,35 @@ module _ {ℓ} {I : Type ℓ} {P : Poly I I} where
 
   ↓-W-leaf-η : {i i′ : I} {q : i == i′} → (l : leaf i == leaf i′ [ W P ↓ q ])
             → ↓-W-leaf-in {q = ↓-W-leaf-out l} == l
-  ↓-W-leaf-η {i} {.i} {q = idp} l = {!!}
+  ↓-W-leaf-η {i} {.i} {q = idp} l = ! f
+    where
+
+      ap² : ∀ {i j} {A : Type i} {B : Type j} {x y : A} {x′ y′ : B} (f : x == y → x′ == y′) {p q : x == y} →  p == q → f p == f q
+      ap² f idp = idp
+
+      --york : ∀ {i j} {A : Type i} {B : Type j} {x y : A} {x′ y′ : B} (p : x == y) (f : x == y → x′ == y′) (q : p == idp) → f p == idp
+      --york = ?
+
+      a : leaf i == leaf i
+      a = l
+
+      b : inl unit == inl unit
+      b = ap W-unroll a
+
+      c : unit == unit
+      c = (–> (inl=inl-equiv unit unit)) b
+
+      d : c == idp
+      d = fst $ ⊤-is-set unit unit c idp
+
+      e : b == idp
+      e = fst (⊔-level ⊤-is-set lemma (W-unroll (leaf i)) (W-unroll (leaf i)) b idp)
+        where
+         lemma : (x y : ⟦ P ⟧ (W P) i) (p q : x == y) → is-contr (p == q)
+         lemma x .x p idp = {!!}
+
+      f : a == idp
+      f = {!!}
 
   ↓-W-node-in : {i₀ i₁ : I} {q : i₀ == i₁} {c₀ : γ P i₀} {c₁ : γ P i₁}
                 {φ₀ : ⟦ P ⟧⟦ c₀ ≺ W P ⟧ } {φ₁ : ⟦ P ⟧⟦ c₁ ≺ W P ⟧ }
@@ -84,7 +111,9 @@ module _ {ℓ} {I : Type ℓ} {P : Poly I I} where
   ↓-W-node-lcl-out : {i : I} {c : γ P i} {φ φ′ : ⟦ P ⟧⟦ c ≺ W P ⟧}
                   → node (c , φ) == node (c , φ′)
                   → ((p : ρ P c) → φ p == φ′ p)
-  ↓-W-node-lcl-out x p = {!!}
+  ↓-W-node-lcl-out {i} {c} {φ} {φ′} x p = {!!}
+    where φ=φ′ : φ == φ′
+          φ=φ′ = {!!}
 
 module _ {ℓ} {I : Type ℓ} {P : Poly I I} where
 
