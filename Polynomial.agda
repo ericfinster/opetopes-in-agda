@@ -110,7 +110,6 @@ module _ {ℓ} {I : Type ℓ} (P : Poly I I) where
            → ↓-≺-out (↓-≺-in f) p=p′ == f p=p′
   ↓-≺-β {i=i′ = idp} {c=c′ = idp} f idp = app=-β (λ p → f idp) _
 
-  -- not sure why we need {X = X} and {i=i′ = i=i′}
   ↓-≺-η : ∀ {κ} {X : I → Type κ} {i i′ : I} {i=i′ : i == i′}
           {c : γ P i} {c′ : γ P i′}                   {c=c′ : c == c′ [ γ P ↓ i=i′ ]}
           {φ : ⟦ P ⟧⟦ c ≺ X ⟧} {φ′ : ⟦ P ⟧⟦ c′ ≺ X ⟧} (φ=φ′ : φ == φ′ [ ⟦ P ⟧≺ X ↓ pair= i=i′ c=c′ ])
