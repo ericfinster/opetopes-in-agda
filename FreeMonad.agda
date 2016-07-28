@@ -2,13 +2,13 @@
 
 open import HoTT
 
-open import opetopes.Polynomial
-open import opetopes.PolyMisc
-open import opetopes.PolynomialMonad
-open import opetopes.CartesianMorphism
-open import opetopes.WTypes
+open import Polynomial
+open import PolyMisc
+open import PolynomialMonad
+open import CartesianMorphism
+open import WTypes
 
-module opetopes.FreeMonad where
+module FreeMonad where
 
   module _ {ℓ} {I : Set ℓ} (P : Poly I I) where
 
