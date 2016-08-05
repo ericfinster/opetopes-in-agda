@@ -63,9 +63,14 @@ module _ {ℓ} {I : Type ℓ} {P : Poly I I} where
   ↓-W-node-out : {i i′ : I} {q : i == i′} {c : γ P i} {c′ : γ P i′}
                  {φ : ⟦ P ⟧⟦ c ≺ W P ⟧ } {φ′ : ⟦ P ⟧⟦ c′ ≺ W P ⟧ }
               → (node (c , φ) == node (c′ , φ′) [ W P ↓ q ])
-              → (r : c == c′ [ γ P ↓ q ])
-              → φ == φ′ [ ⟦ P ⟧≺ (W P) ↓ pair= q r ]
-  ↓-W-node-out {q = idp} n=n r = {!!}
+              → Σ (c == c′ [ γ P ↓ q ]) (λ r → φ == φ′ [ ⟦ P ⟧≺ (W P) ↓ pair= q r ])
+  ↓-W-node-out {q = idp} {c} {c′} {φ} {φ′} n=n = (fst= cφ=cφ′ , {!snd= cφ=cφ′!})
+
+    where nd=nd-eqv : (node (c , φ) == node (c′ , φ′)) ≃ ((c , φ) == (c′ , φ′))
+          nd=nd-eqv = inr=inr-equiv (c , φ) (c′ , φ′) ∘e equiv-ap equiv-W (node (c , φ)) (node (c′ , φ′))
+
+          cφ=cφ′ : (c , φ) == (c′ , φ′)
+          cφ=cφ′ = –> nd=nd-eqv n=n
 
   ↓-W-node-lcl-in : {i : I} {c : γ P i} {φ φ′ : ⟦ P ⟧⟦ c ≺ W P ⟧}
                     (s : (p : ρ P c) → φ p == φ′ p)
