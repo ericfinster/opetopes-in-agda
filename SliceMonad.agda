@@ -12,101 +12,78 @@ module SliceMonad where
   module _ {ℓ} {I : Type ℓ} (M : PolyMonad I) where
 
     open PolyMonad 
+    open ADMIT
 
     data SlCn : {i : I} → γ (P M) i → Type ℓ where
       dot : (i : I) → SlCn {i = i} (⟪ η M ⟫ lt)
       box : {i : I} → (c : γ (P M) i) → 
-            (ε : (p : ρ (P M) c) → Σ (γ (P M) (τ (P M) p)) SlCn) → 
-            SlCn (⟪ μ M ⟫ (c , fst ∘ ε))
+            (δ : (p : ρ (P M) c) → γ (P M) (τ (P M) p)) → 
+            (ε : (p : ρ (P M) c) → SlCn (δ p)) → 
+            SlCn (⟪ μ M ⟫ (c , δ))
   
     SlPl : {i : I} → {c : γ (P M) i} → (w : SlCn c) → Type ℓ
     SlPl (dot i) = Lift ⊥
-    SlPl (box c ε) = Lift {j = ℓ} ⊤ ⊔ Σ (ρ (P M) c) (λ p → SlPl (snd (ε p)))
+    SlPl (box c δ ε) = Lift {j = ℓ} ⊤ ⊔ Σ (ρ (P M) c) (λ p → SlPl (ε p))
 
     B : Type ℓ
     B = Σ I (γ (P M))
 
+    SlCn' : B → Type ℓ
+    SlCn' (i , c) = SlCn c
+    
     {-# TERMINATING #-}
     SlP : Poly B B
     γ SlP (i , c) = SlCn c
     ρ SlP {i , c} n = SlPl n
     τ SlP {i , _} {dot .i} (lift ())
-    τ SlP {i , _} {box c ε} (inl (lift unit)) = i , c
-    τ SlP {i , _} {box c ε} (inr (p , n)) = τ SlP n
+    τ SlP {i , _} {box c δ ε} (inl (lift unit)) = i , c
+    τ SlP {i , _} {box c δ ε} (inr (p , n)) = τ SlP n
 
     sl-η : IdP B ⇝ SlP
-    γ-map sl-η {i , c} _ = transport SlCn (γ≈ (η-left-law M c)) (box c (λ p → (⟪ η M ⟫ lt) , dot (τ (P M) p)))
+    γ-map sl-η {i , c} _ = transport SlCn (γ≈ (η-left-law M c)) (box c (λ p → ⟪ η M ⟫ lt) (λ p → dot (τ (P M) p)))
     ρ-eqv sl-η {i , c} {lift unit} = {!!} ∘e lemma 
 
-      where lemma : Lift {j = ℓ} ⊤ ≃ SlPl (box c (λ p → ⟪ η M ⟫ lt , dot (τ (P M) p)))
-            lemma = (λ { (lift unit) → inl lt }) , is-eq _ (λ { p → lt }) 
-                    (λ { (inl (lift unit)) → idp ; (inr (_ , lift ())) }) 
-                    (λ { (lift unit) → idp })
+       where lemma : Lift {j = ℓ} ⊤ ≃ SlPl (box c (λ p → ⟪ η M ⟫ lt) (λ p → dot (τ (P M) p)))
+             lemma = (λ { (lift unit) → inl lt }) , is-eq _ (λ { p → lt }) 
+                     (λ { (inl (lift unit)) → idp ; (inr (_ , lift ())) }) 
+                     (λ { (lift unit) → idp })
 
     τ-coh sl-η p = {!!}
 
-    -- open ADMIT
+    sl-graft : {i : I} → {c : γ (P M) i} → (w : SlCn c) → 
+               (δ : (p : ρ (P M) c) → γ (P M) (τ (P M) p)) →
+               (ε : (p : ρ (P M) c) → SlCn (δ p)) → SlCn (⟪ μ M ⟫ (c , δ)) 
+    sl-graft (dot i) δ₁ ε₁ = transport! SlCn' (pair= (τ-coh (η M) lt) {!!}) (ε₁ (⟪ η M ⟫↓ lt)) 
+    sl-graft (box c δ ε) δ₁ ε₁ = transport! SlCn {!!} (box c (λ p → ⟪ μ M ⟫ (δ p , α p)) IH)
+    
+      where α : (p : ρ (P M) c) → (q : ρ (P M) (δ p)) → γ (P M) (τ (P M) q)
+            α p q = {!!}
 
-    -- {-# TERMINATING #-}
-    -- sl-join : {b : B} → γ (SlP ⊚ SlP) b → γ SlP b
-    -- sl-join {i , ._} ((leaf .i , idp) , ψ) = ⟪ sl-η ⟫ lt
-    -- sl-join {i , ._} ((node (c , φ) , idp) , ψ) = 
-    --   (⟪ fr-μ (P M) ⟫ (localTree , fst ∘ IH) , ADMIT)  -- ! (γ≈ (ε-is-monad-map (localTree , fst ∘ IH))) ∙ {!!})
+            β : (p : ρ (P M) c) → (q : ρ (P M) (δ p)) → SlCn (α p q)
+            β p q = {!!}
+            
+            IH : (p : ρ (P M) c) → SlCn (⟪ μ M ⟫ (δ p , α p))
+            IH p = sl-graft (ε p) (α p) (β p)
 
-    --   where localCons : γ SlP (i , c)
-    --         localCons = ψ (inl lt)
+    sl-graft-ρ-here : {i : I} → {c : γ (P M) i} → (w : SlCn c) → 
+                      (δ : (p : ρ (P M) c) → γ (P M) (τ (P M) p)) →
+                      (ε : (p : ρ (P M) c) → SlCn (δ p)) → (n : SlPl w) → SlPl (sl-graft w δ ε)
+    sl-graft-ρ-here (dot i) δ ε (lift ())
+    sl-graft-ρ-here (box c δ ε) δ₁ ε₁ (inl (lift unit)) = {!!}
+    sl-graft-ρ-here (box c δ ε) δ₁ ε₁ (inr (p , n)) = {!!}
 
-    --         localTree : W (P M) i
-    --         localTree = fst localCons
-
-    --         localEv : ⟪ ε ⟫ localTree == c
-    --         localEv = snd localCons
-  
-    --         liftDec : ⟦ FrP (P M) ⟧⟦ localTree ≺ W (P M) ⟧
-    --         liftDec = ⟪ ε ∣ W (P M) ↓ localEv ⟫⇑ φ
-
-    --         nextTree : (l : leafOf localTree) → W (P M) (leafType l)
-    --         nextTree l = liftDec l
-
-    --         nextCons : (l : leafOf localTree) → γ (P M) (leafType l)
-    --         nextCons l = ⟪ ε ⟫ (nextTree l)
-
-    --         nodeCoe : (l : leafOf localTree) → (n : nodeOf (nextTree l)) → nodeOf (node (c , φ))
-    --         nodeCoe l n = inr (⟦ P M ↓ localEv ⟧↓ ( ⟪ ε ⟫↓ l) , nodeTrans (⟪ ε ∣ W (P M) ↓ localEv ⟫⇑-po φ l) n)
-
-    --         nodeCoh : (l : leafOf localTree) → (n : nodeOf (nextTree l)) → nodeType n == nodeType (nodeCoe l n)
-    --         nodeCoh l n = nodeTypeCoh (⟪ ε ∣ W (P M) ↓ localEv ⟫⇑-po φ l) n
-
-    --         nextDec : (l : leafOf localTree) → ⟦ SlP ⟧⟦ nextTree l , idp ≺ γ SlP ⟧
-    --         nextDec l n = transport (γ SlP)  (! (nodeCoh l n)) (ψ (nodeCoe l n)) 
-
-    --         IH : (l : leafOf localTree) → γ SlP (leafType l , nextCons l)
-    --         IH l = sl-join {leafType l , nextCons l} ((nextTree l , idp) , nextDec l)
-
-    --         IH-ev : (l : leafOf localTree) → ⟪ ε ⟫ (fst (IH l)) == nextCons l
-    --         IH-ev l = snd (IH l)
-
-    --         -- unfold : ⟪ (ε ∥ ε) ▶ μ M ⟫ (localTree , fst ∘ IH) == 
-    --         --          ⟪ (ε ∥ ε) ▶ μ M ⟫ (localTree , fst ∘ IH) 
-    --         -- unfold = ⟪ μ M ⟫ (⟪ ε ⟫ localTree , (λ p → transport (γ (P M)) (⟪ ε ⓐ localTree ⟫↑= p) (⟪ ε ⟫ ((fst ∘ IH) (⟪ ε ⟫↑ p))))) =⟨ idp ⟩ 
-    --         --          ⟪ (ε ∥ ε) ▶ μ M ⟫ (localTree , fst ∘ IH) ∎
-
-    --         -- goal : ⟪ ε ⟫ (⟪ fr-μ (P M) ⟫ (localTree , fst ∘ IH)) == ⟪ ε ⟫ (node (c , φ))
-    --         -- goal = ⟪ ε ⟫ (⟪ fr-μ (P M) ⟫ (localTree , fst ∘ IH)) =⟨ ! (γ≈ (ε-is-monad-map (localTree , fst ∘ IH))) ⟩
-    --         --        ⟪ (ε ∥ ε) ▶ μ M ⟫ (localTree , fst ∘ IH) =⟨ {!ADMIT!} ⟩ 
-                   
-    --         --        ⟪ ε ⟫ (node (c , φ)) ∎
-
-    -- sl-μ : SlP ⊚ SlP ⇝ SlP
-    -- γ-map sl-μ = sl-join
-    -- ρ-eqv sl-μ = ADMIT
-    -- τ-coh sl-μ = ADMIT
-   
-    -- SlM : PolyMonad B
-    -- P SlM = SlP
-    -- η SlM = sl-η
-    -- μ SlM = sl-μ
-    -- η-left-law SlM c = ADMIT
-    -- η-right-law SlM c = ADMIT
-    -- μ-assoc-law SlM c = ADMIT
+    sl-μ-γ : {i : I} {c : γ (P M) i} (w : SlCn c) (κ : (p : ρ SlP w) → SlCn' (τ SlP p)) → SlCn c
+    sl-μ-γ (dot i) κ = dot i
+    sl-μ-γ (box c δ ε) κ = sl-graft (κ (inl lt)) δ (λ p → sl-μ-γ (ε p) (λ n → κ (inr (p , n))))
+    
+    sl-μ-ρ : {i : I} {c : γ (P M) i} (w : SlCn c) (κ : (p : ρ SlP w) → SlCn (snd (τ SlP p))) →
+             Σ (SlPl w) (SlPl ∘ κ) → SlPl (sl-μ-γ w κ)
+    sl-μ-ρ (dot i) k (lift () , n₁)
+    sl-μ-ρ (box c δ ε) k (n₀ , n₁) = {!!}
+    
+    {-# TERMINATING #-}
+    sl-μ : SlP ⊚ SlP ⇝ SlP
+    γ-map sl-μ (w , κ) = sl-μ-γ w κ
+    ρ-eqv sl-μ {c = w , k} = sl-μ-ρ w k , {!!}
+    τ-coh sl-μ p = {!!}
 
