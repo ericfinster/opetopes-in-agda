@@ -64,13 +64,26 @@ module SliceMonad where
             
             IH : (p : ρ (P M) c) → SlCn (⟪ μ M ⟫ (δ p , α p))
             IH p = sl-graft (ε p) (α p) (β p)
-            
+
+    sl-graft-ρ-here : {i : I} → {c : γ (P M) i} → (w : SlCn c) → 
+                      (δ : (p : ρ (P M) c) → γ (P M) (τ (P M) p)) →
+                      (ε : (p : ρ (P M) c) → SlCn (δ p)) → (n : SlPl w) → SlPl (sl-graft w δ ε)
+    sl-graft-ρ-here (dot i) δ ε (lift ())
+    sl-graft-ρ-here (box c δ ε) δ₁ ε₁ (inl (lift unit)) = {!!}
+    sl-graft-ρ-here (box c δ ε) δ₁ ε₁ (inr (p , n)) = {!!}
+
+    sl-μ-γ : {i : I} {c : γ (P M) i} (w : SlCn c) (κ : (p : ρ SlP w) → SlCn' (τ SlP p)) → SlCn c
+    sl-μ-γ (dot i) κ = dot i
+    sl-μ-γ (box c δ ε) κ = sl-graft (κ (inl lt)) δ (λ p → sl-μ-γ (ε p) (λ n → κ (inr (p , n))))
+    
+    sl-μ-ρ : {i : I} {c : γ (P M) i} (w : SlCn c) (κ : (p : ρ SlP w) → SlCn (snd (τ SlP p))) →
+             Σ (SlPl w) (SlPl ∘ κ) → SlPl (sl-μ-γ w κ)
+    sl-μ-ρ (dot i) k (lift () , n₁)
+    sl-μ-ρ (box c δ ε) k (n₀ , n₁) = {!!}
+    
     {-# TERMINATING #-}
     sl-μ : SlP ⊚ SlP ⇝ SlP
-    γ-map sl-μ (dot i , κ) = dot i
-    γ-map sl-μ (box {i} c δ ε , κ) = sl-graft (κ (inl lt)) δ (λ p → γ-map sl-μ (ε p , (λ q → κ (inr (p , q)))))
-    ρ-eqv sl-μ = {!!}
+    γ-map sl-μ (w , κ) = sl-μ-γ w κ
+    ρ-eqv sl-μ {c = w , k} = sl-μ-ρ w k , {!!}
     τ-coh sl-μ p = {!!}
 
-  -- μ (Slice M) (dot i) δ = dot i
-  -- μ (Slice M) (box c ε) κ = SlGrft M (κ (inl tt)) (λ p → fst (ε p) , μ (Slice M) (snd (ε p)) (λ q → κ (inr (p , q))))
