@@ -53,7 +53,20 @@ module SliceMonad where
     sl-graft : {i : I} → {c : γ (P M) i} → (w : SlCn c) → 
                (δ : (p : ρ (P M) c) → γ (P M) (τ (P M) p)) →
                (ε : (p : ρ (P M) c) → SlCn (δ p)) → SlCn (⟪ μ M ⟫ (c , δ)) 
-    sl-graft (dot i) δ₁ ε₁ = transport! SlCn' (pair= (τ-coh (η M) lt) {!!}) (ε₁ (⟪ η M ⟫↓ lt)) 
+    sl-graft (dot i) δ₁ ε₁ = {!!} -- transport! SlCn' (pair= (τ-coh (η M) lt) {!γ≈ (η-left-law M (γ-map (η M) lt))!}) (ε₁ (⟪ η M ⟫↓ lt)) 
+
+      where ηi : γ (P M) i
+            ηi = ⟪ η M ⟫ lt
+
+            ηp : ρ (P M) ηi
+            ηp = ⟪ η M ⟫↓ lt 
+
+            ε' : SlCn (δ₁ ηp)
+            ε' = ε₁ ηp
+
+            test : {!!} == ηi
+            test = γ≈ (η-left-law M ηi)
+
     sl-graft (box c δ ε) δ₁ ε₁ = transport! SlCn {!!} (box c (λ p → ⟪ μ M ⟫ (δ p , α p)) IH)
     
       where α : (p : ρ (P M) c) → (q : ρ (P M) (δ p)) → γ (P M) (τ (P M) q)
@@ -69,7 +82,7 @@ module SliceMonad where
                       (δ : (p : ρ (P M) c) → γ (P M) (τ (P M) p)) →
                       (ε : (p : ρ (P M) c) → SlCn (δ p)) → (n : SlPl w) → SlPl (sl-graft w δ ε)
     sl-graft-ρ-here (dot i) δ ε (lift ())
-    sl-graft-ρ-here (box c δ ε) δ₁ ε₁ (inl (lift unit)) = {!!}
+    sl-graft-ρ-here (box c δ ε) δ₁ ε₁ (inl (lift unit)) = {!!} -- ⟦ SlP ↓ from-transp! SlCn idp {!!} ⟧↓ {!!}
     sl-graft-ρ-here (box c δ ε) δ₁ ε₁ (inr (p , n)) = {!!}
 
     sl-μ-γ : {i : I} {c : γ (P M) i} (w : SlCn c) (κ : (p : ρ SlP w) → SlCn' (τ SlP p)) → SlCn c

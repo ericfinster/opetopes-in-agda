@@ -79,3 +79,4 @@ module PolyMisc where
     ρ-eqv ⊚-dist-⊕ {c = inr cr , φ} = ide _
     τ-coh ⊚-dist-⊕ {c = inl cq , φ} p = idp
     τ-coh ⊚-dist-⊕ {c = inr cr , φ} p = idp
+
