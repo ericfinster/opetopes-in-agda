@@ -98,9 +98,6 @@ module CartesianMorphism where
              ! (ap (f ∘ τ P) q) ∙ ⟪_⟫↓= p₀ ∙ ap (τ Q) (ap (⟪_⟫↓) q) == ⟪_⟫↓= p₁
       ⟪_⟫■ idp = ∙-unit-r ( ⟪_⟫↓= _)
 
-  -- We next prove that a cartesian morphism induces an equivalence
-  -- between appropriate spaces of decorations.
-
   module _ {ℓ} {I J K L : Type ℓ}
            {f : I → K} {g : J → L}
            {P : Poly I J} {Q : Poly K L} where
@@ -133,6 +130,9 @@ module CartesianMorphism where
                       =⟨ φ-expand |in-ctx (λ x → transport Y (⟪ α ⟫↑= (⟪ α ⟫↓ p)) x) ⟩ 
                     transport Y (⟪ α ⟫↑= (⟪ α ⟫↓ p)) (T (φ (⟪ α ⟫↑ (⟪ α ⟫↓ p)))) ∎ 
 
+
+    -- Specialized to the case where T is the identity, the above
+    -- induces an equivalence on decorations
     ⟪_∣_⟫⇓ : (α : ⟦ f ∣ g ⟧⟦ P ⇒ Q ⟧) (X : K → Type ℓ) {j : J} {c : γ P j} →
             ⟦ P ⟧⟦ c ≺ X ∘ f ⟧ → ⟦ Q ⟧⟦ ⟪ α ⟫ c ≺ X ⟧
     ⟪ α ∣ X ⟫⇓ φ q = push α (X ∘ f) X (λ x → x) φ q 

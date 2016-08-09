@@ -37,10 +37,27 @@ module PolynomialMonad where
 
     η-plc : (i : I) → ρ P (η-cns i)
     η-plc i = ⟪ η ⟫↓ lt
+
+    η-plc-contr : (i : I) → is-contr (ρ P (η-cns i))
+    η-plc-contr i = equiv-preserves-level (⟪ η ⟫≃ ∘e (lower-equiv)⁻¹ ) Unit-is-contr
     
+    η-dec-eqv : (i : I) (X : I → Type ℓ) → X i ≃ ⟦ P ⟧⟦ ⟪ η ⟫ lt ≺ X ⟧
+    η-dec-eqv i X = ⟪ η ∣ X ⟫⇕-eqv ∘e lemma 
+    
+      where lemma : {i : I} → X i ≃ ((p : ρ (IdP I) {i} lt) → X (τ (IdP I) {i} {lt} p)) 
+            lemma {i} = equiv (λ x → cst x) (λ f → f lt) (λ f → λ= (λ x → idp)) (λ x → idp)
+            
+    η-dec-unique : {i₀ i₁ : I} → (p : i₀ == i₁) →
+                   (δ₀ : ⟦ P ⟧⟦ ⟪ η ⟫ {i₀} lt ≺ γ P ⟧) →
+                   (δ₁ : ⟦ P ⟧⟦ ⟪ η ⟫ {i₁} lt ≺ γ P ⟧) →
+                   δ₀ (η-plc i₀) == δ₁ (η-plc i₁) [ _ ↓ p ] → 
+                   δ₀ == δ₁ [ (λ j → ⟦ P ⟧⟦ ⟪ η ⟫ {j} lt ≺ γ P ⟧) ↓ p ]
+    η-dec-unique idp δ₀ δ₁ r = {!!}
+
+
     η-unfold : (i : I) → (δ : ⟦ P ⟧⟦ η-cns i ≺ γ P ⟧) →
                ⟪ μ ⟫ (η-cns i , δ) == δ (η-plc i) [ γ P ↓ ⟪ η ⟫↓= lt ]
-    η-unfold i δ = {!!}
+    η-unfold i δ = lemma₁ ∙'ᵈ (γ≈ (η-right-law (δ (η-plc i))))
 
        where α : ⟪ ⊚-unit-r P ▶ (poly-id P ∥ η) ▶ μ ⟫ (δ (η-plc i)) == (δ (η-plc i))
              α = γ≈ (η-right-law (δ (η-plc i))) 
@@ -60,8 +77,11 @@ module PolynomialMonad where
              bleep = δ 
 
              lemma : δ == ⟪ poly-id P ∣ η ⟫⇕ (cst (δ (η-plc i))) [ (λ j → ⟦ P ⟧⟦ ⟪ η ⟫ {j} lt ≺ γ P ⟧) ↓ ⟪ η ⟫↓= lt ]
-             lemma = ↓-Π-in (λ {p₀} {p₁} r → {!!})
+             lemma = {!!}
 
+             lemma₁ : ⟪ μ ⟫ (⟪ η ⟫ lt , δ) == ⟪ μ ⟫ (⟪ η ⟫ lt , ⟪ poly-id P ∣ η ⟫⇕ (cst (δ (η-plc i)))) [ γ P ↓ ⟪ η ⟫↓= lt ]
+             lemma₁ = ap↓ (λ δ' → ⟪ μ ⟫ (⟪ η ⟫ lt , δ')) lemma
+             
              fred : δ (η-plc i) == ⟪ poly-id P ∣ η ⟫⇕ (cst (δ (η-plc i))) (⟪ η ⟫↓ lt) [ γ P ↓ ⟪ η ⟫↓= lt ]
              fred = ⟪ poly-id P ∣ η ⟫⇕-coh (cst (δ (η-plc i))) lt
 
