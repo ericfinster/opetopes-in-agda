@@ -4,6 +4,8 @@ open import HoTT
 
 module Simple where
 
+  open ADMIT
+
   trans-lemma : {A : Type₀} (B : A → Type₀) (C : {a : A} → B a → Type₀)
                 {a₀ a₁ : A} (e : a₀ == a₁) (b : B a₀) → C b → C (transport B e b)
   trans-lemma B C idp b c = c
@@ -31,6 +33,12 @@ module Simple where
          (p : ρ c) → (q : ρ (δ p)) → ρ (μ c δ)
     μp δ p q = –> (μp-eqv δ) (p , q)
 
+    ρ-fst : {i : Idx} {c : γ i} (δ : (p : ρ c) → γ (τ p)) → ρ (μ c δ) → ρ c
+    ρ-fst δ pp = fst (<– (μp-eqv δ) pp)
+
+    ρ-snd : {i : Idx} {c : γ i} (δ : (p : ρ c) → γ (τ p)) → (pp : ρ (μ c δ)) → ρ (δ (ρ-fst δ pp))
+    ρ-snd δ pp = snd (<– (μp-eqv δ) pp)
+
     field
     
       ηp-compat : {i : Idx} → τ (ηp i) == i
@@ -50,7 +58,7 @@ module Simple where
   --  The Slice Monad
   --
 
-  module Slice (M : Monad) where
+  module _ (M : Monad) where
 
     open Monad M
     
@@ -76,44 +84,98 @@ module Simple where
     SlTy (box c δ ε) (inl unit) = _ , c
     SlTy (box c δ ε) (inr (p , n)) = SlTy (ε p) n
   
-  -- SlGrft : (M : Monad) {i : Idx M} {c : γ M i} (w : SlCn M c)
-  --          (δ : (p : ρ M c) → γ M (τ M p))
-  --          (ε : (p : ρ M c) → SlCn M (δ p)) →
-  --          SlCn M (μ M c δ)
-  -- SlGrft M (dot i) δ ε = transport (SlCn' M) (pair= (ηp-compat M) (unit-r M δ)) (ε (ηp M i))
-  -- SlGrft M (box c δ ε) δ₁ ε₁ = transport (SlCn M) (assoc M c δ δ₁) (box c δ' IH)
+    module Local {i : Idx} (c : γ i)
+                 (δ : (p : ρ c) → γ (τ p))
+                 (ε : (p : ρ c) → SlCn (δ p))
+                 (δ₁ : (p : ρ (μ c δ)) → γ (τ p))
+                 (ε₁ : (p : ρ (μ c δ)) → SlCn (δ₁ p)) where
 
-  --   where δ' : (p : ρ M c) → γ M (τ M p)
-  --         δ' p = μ M (δ p) (λ q → transport (γ M) (μp-compat M {δ = δ} p q) (δ₁ (μp M p q)))
+      δ₁' : (p : ρ c) → (q : ρ (δ p)) → γ (τ q)
+      δ₁' p q = transport γ (μp-compat p q) (δ₁ (μp δ p q))
 
-  --         IH : (p : ρ M c) → SlCn M (δ' p)
-  --         IH p = SlGrft M (ε p) _ (λ q → transport (SlCn' M) (pair= (μp-compat M {δ = δ} p q) (from-transp (γ M) _ idp)) (ε₁ (μp M p q)))
+      ε₁' : (p : ρ c) → (q : ρ (δ p)) → SlCn (δ₁' p q)
+      ε₁' p q = transport SlCn' (pair= (μp-compat p q) (from-transp γ _ idp)) (ε₁ (μp δ p q))
+      
+      δ' : (p : ρ c) → γ (τ p)
+      δ' p = μ (δ p) (δ₁' p)
+    
+    SlGrft : {i : Idx} {c : γ i} (w : SlCn c)
+             (δ : (p : ρ c) → γ (τ p))
+             (ε : (p : ρ c) → SlCn (δ p)) →
+             SlCn (μ c δ)
+    SlGrft (dot i) δ ε = transport SlCn' (pair= ηp-compat (unit-r δ)) (ε (ηp i))
+    SlGrft (box c δ ε) δ₁ ε₁ = transport SlCn (assoc c δ δ₁) (box c δ' (λ p → SlGrft (ε p) (δ₁' p) (ε₁' p)))
+      where open Local c δ ε δ₁ ε₁
 
-  -- SlGrftPl₀ : (M : Monad) {i : Idx M} {c : γ M i} (w : SlCn M c)
-  --             (δ : (p : ρ M c) → γ M (τ M p))
-  --             (ε : (p : ρ M c) → SlCn M (δ p)) →
-  --             (n : SlPl M w) → SlPl M (SlGrft M w δ ε)
-  -- SlGrftPl₀ M (dot i) δ ε ()
-  -- SlGrftPl₀ M (box c δ ε) δ₁ ε₁ (inl unit) = trans-lemma (SlCn M) (SlPl M) (assoc M c δ δ₁) _ (inl unit)
-  -- SlGrftPl₀ M (box c δ ε) δ₁ ε₁ (inr (p , n)) = trans-lemma (SlCn M) (SlPl M) (assoc M c δ δ₁) _ (inr (p , IH p n)) 
+    SlGrftPl₀ : {i : Idx} {c : γ i} (w : SlCn c)
+                (δ : (p : ρ c) → γ (τ p))
+                (ε : (p : ρ c) → SlCn (δ p)) →
+                (n : SlPl w) → SlPl (SlGrft w δ ε)
+    SlGrftPl₀ (dot i) δ ε ()
+    SlGrftPl₀ (box c δ ε) δ₁ ε₁ (inl unit) = trans-lemma SlCn SlPl (assoc c δ δ₁) _ (inl unit)
+    SlGrftPl₀ (box c δ ε) δ₁ ε₁ (inr (p , n)) = trans-lemma SlCn SlPl (assoc c δ δ₁) _ (inr (p , IH p n)) 
 
-  --   where δ' : (p : ρ M c) → γ M (τ M p)
-  --         δ' p = μ M (δ p) (λ q → transport (γ M) (μp-compat M {δ = δ} p q) (δ₁ (μp M p q)))
+      where open Local c δ ε δ₁ ε₁
+      
+            IH₀ : (p : ρ c) → SlCn (δ' p)
+            IH₀ p = SlGrft (ε p) (δ₁' p) (ε₁' p)
 
-  --         grft-IH : (p : ρ M c) → SlCn M (δ' p)
-  --         grft-IH p = SlGrft M (ε p) _ (λ q → transport (SlCn' M) (pair= (μp-compat M {δ = δ} p q) (from-transp (γ M) _ idp)) (ε₁ (μp M p q)))
+            IH : (p : ρ c) → (n : SlPl (ε p)) → SlPl (IH₀ p)
+            IH p n = SlGrftPl₀ (ε p) (δ₁' p) (ε₁' p) n
 
-  --         IH : (p : ρ M c) → (n : SlPl M (ε p)) → SlPl M (grft-IH p)
-  --         IH p n = SlGrftPl₀ M (ε p) _ _ n
+    SlGrftPl₁ : {i : Idx} {c : γ i} (w : SlCn c)
+                (δ : (p : ρ c) → γ (τ p))
+                (ε : (p : ρ c) → SlCn (δ p)) →
+                (p : ρ c) → (n : SlPl (ε p)) → SlPl (SlGrft w δ ε)
+    SlGrftPl₁ (dot i) δ ε p n = ADMIT -- Right, and this is just "n" with the type fixed ...
+    SlGrftPl₁ (box c δ ε) δ₁ ε₁ p n = trans-lemma SlCn SlPl (assoc c δ δ₁) _ (inr (p₀ , IH))
 
-  -- SlGrftPl₁ : (M : Monad) {i : Idx M} {c : γ M i} (w : SlCn M c)
-  --             (δ : (p : ρ M c) → γ M (τ M p))
-  --             (ε : (p : ρ M c) → SlCn M (δ p)) →
-  --             (p : ρ M c) → (n : SlPl M (ε p)) → SlPl M (SlGrft M w δ ε)
-  -- SlGrftPl₁ M (dot i) δ ε p n = {!!}
-  -- SlGrftPl₁ M (box c δ ε) δ₁ ε₁ p n = trans-lemma (SlCn M) (SlPl M) (assoc M c δ δ₁) _ (inr {!!})
+      where open Local c δ ε δ₁ ε₁
 
-  -- -- Right.  What you see now is that you actually have to split the place of
-  -- -- the multiplication here in order to call out to the induction hypothesis.
-  -- -- So this means you'll actually have to spell out the place equivalences and
-  -- -- rewrite this so that you use them.
+            p₀ = ρ-fst δ p
+            p₁ = ρ-snd δ p
+
+            lemma : ε₁ p == ε₁' p₀ p₁ [ SlCn' ↓ pair= ADMIT ADMIT ]
+            lemma = ADMIT
+            
+            IH : SlPl (SlGrft (ε p₀) (δ₁' p₀) (ε₁' p₀))
+            IH = SlGrftPl₁ (ε p₀) (δ₁' p₀) (ε₁' p₀) p₁ ADMIT
+            -- right, well, the last guy is just "n" but the
+            -- type has to be fixed up...
+            
+  open Monad
+  
+  η-sl : (M : Monad) (b : SlIdx M) → SlCn' M b
+  η-sl M (i , c) = transport (SlCn M) (unit-l M c) (box c (λ p → η M (τ M p)) (λ p → dot (τ M p)))
+
+  μ-sl : (M : Monad) {b : SlIdx M} (w : SlCn' M b) (κ : (p : SlPl M w) → SlCn' M (SlTy M w p)) → SlCn' M b
+  μ-sl M (dot i) κ = dot i
+  μ-sl M (box c δ ε) κ = SlGrft M (κ (inl unit)) δ (λ p → μ-sl M (ε p) (λ q → κ (inr (p , q))))
+
+  μ-pl : (M : Monad) {b : SlIdx M} (w : SlCn' M b) (κ : (p : SlPl M w) → SlCn' M (SlTy M w p)) → 
+         Σ (SlPl M w) (SlPl M ∘ κ) → SlPl M (μ-sl M w κ)
+  μ-pl M (dot i) κ (() , n₁)
+  μ-pl M (box c δ ε) κ (inl unit , n₁) = SlGrftPl₀ M (κ (inl unit)) δ _ n₁
+  μ-pl M (box c δ ε) κ (inr (p , n₀) , n₁) = SlGrftPl₁ M (κ (inl unit)) δ _ p IH
+
+    where κ' : (n : SlPl M (ε p)) → SlCn' M (SlTy M (ε p) n)
+          κ' n = κ (inr (p , n))
+
+          IH : SlPl M (μ-sl M (ε p) κ')
+          IH = μ-pl M (ε p) κ' (n₀ , n₁)
+          
+
+  Sl : Monad → Monad
+  Idx (Sl M) = SlIdx M
+  γ (Sl M) = SlCn' M
+  ρ (Sl M) w = SlPl M w
+  τ (Sl M) n = SlTy M _ n
+  η (Sl M) = η-sl M
+  μ (Sl M) = μ-sl M
+  ηp-eqv (Sl M) = ADMIT
+  μp-eqv (Sl M) κ = μ-pl M _ κ , ADMIT
+  ηp-compat (Sl M) = ADMIT
+  μp-compat (Sl M) = ADMIT
+  unit-l (Sl M) = ADMIT
+  unit-r (Sl M) = ADMIT
+  assoc (Sl M) = ADMIT
