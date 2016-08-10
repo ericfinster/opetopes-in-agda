@@ -33,6 +33,9 @@ module Simple where
     ηp : (i : Idx) → ρ (η i)
     ηp i = –> ηp-eqv unit
 
+    ηp-unique : (i : Idx) (p : ρ (η i)) → p == ηp i
+    ηp-unique i p = contr-has-all-paths (equiv-preserves-level ηp-eqv Unit-is-contr) p (ηp i)
+    
     μp : {i : Idx} {c : γ i} (δ : (p : ρ c) → γ (τ p)) →
          (p : ρ c) → (q : ρ (δ p)) → ρ (μ c δ)
     μp δ p q = –> (μp-eqv δ) (p , q)
@@ -124,7 +127,7 @@ module Simple where
                 (δ : (p : ρ c) → γ (τ p))
                 (ε : (p : ρ c) → SlCn (δ p)) →
                 (p : ρ c) → (n : SlPl (ε p)) → SlPl (SlGrft w δ ε)
-    SlGrftPl₁ (dot i) δ ε p n = ADMIT -- Right, and this is just "n" with the type fixed ...
+    SlGrftPl₁ (dot i) δ ε p n = –> (trans-eqv SlCn' SlPl (pair= ηp-compat (unit-r δ)) (ε (ηp i))) (transport (SlPl ∘ ε) (ηp-unique i p) n) 
     SlGrftPl₁ (box c δ ε) δ₁ ε₁ p n = trans-lemma SlCn SlPl (assoc c δ δ₁) _ (inr (p₀ , IH))
 
       where open Local c δ ε δ₁ ε₁
@@ -144,12 +147,14 @@ module Simple where
                 (δ : (p : ρ c) → (γ (τ p)))
                 (ε : (p : ρ c) → SlCn (δ p)) →
                 (n : SlPl (SlGrft w δ ε)) → SlPl w ⊔ Σ (ρ c) (λ p → SlPl (ε p))
-    SlSplitPl (dot i) δ₁ ε₁ n = inr (ηp i , {!!})  -- Essentially n, with type modification.
+    SlSplitPl (dot i) δ₁ ε₁ n = inr (ηp i , <– (trans-eqv SlCn' SlPl (pair= ηp-compat (unit-r δ₁)) (ε₁ (ηp i))) n) 
     SlSplitPl (box c δ ε) δ₁ ε₁ n with <– (trans-eqv SlCn SlPl (assoc c δ δ₁) _) n
     SlSplitPl (box c δ ε) δ₁ ε₁ n | inl unit = inl (inl unit)
-    SlSplitPl (box c δ ε) δ₁ ε₁ n | inr (p , n₁) = {!!}
+    SlSplitPl (box c δ ε) δ₁ ε₁ n | inr (p , n') with let open Local c δ ε δ₁ ε₁ in SlSplitPl (ε p) (δ₁' p) (ε₁' p) n'
+    SlSplitPl (box c δ ε) δ₁ ε₁ n | inr (p , n') | (inl n₀) = inl (inr (p , n₀))
+    SlSplitPl (box c δ ε) δ₁ ε₁ n | inr (p , n') | (inr (q , n₀)) = inr (μp δ p q , <– (trans-eqv SlCn' SlPl (pair= (μp-compat p q) (from-transp γ (μp-compat p q) idp)) (ε₁ (μp δ p q))) n₀)
       where open Local c δ ε δ₁ ε₁
-      
+            
   open Monad
   
   η-sl : (M : Monad) (b : SlIdx M) → SlCn' M b
