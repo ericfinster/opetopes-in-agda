@@ -6,9 +6,13 @@ module Simple where
 
   open ADMIT
 
+  trans-eqv : {A : Type₀} (B : A → Type₀) (C : {a : A} → B a → Type₀)
+              {a₀ a₁ : A} (e : a₀ == a₁) (b : B a₀) → C b ≃ C (transport B e b)
+  trans-eqv B C idp b = ide _
+  
   trans-lemma : {A : Type₀} (B : A → Type₀) (C : {a : A} → B a → Type₀)
                 {a₀ a₁ : A} (e : a₀ == a₁) (b : B a₀) → C b → C (transport B e b)
-  trans-lemma B C idp b c = c
+  trans-lemma B C e b = –> (trans-eqv B C e b)
 
   record Monad : Type₁ where
     field
@@ -38,7 +42,7 @@ module Simple where
 
     ρ-snd : {i : Idx} {c : γ i} (δ : (p : ρ c) → γ (τ p)) → (pp : ρ (μ c δ)) → ρ (δ (ρ-fst δ pp))
     ρ-snd δ pp = snd (<– (μp-eqv δ) pp)
-
+    
     field
     
       ηp-compat : {i : Idx} → τ (ηp i) == i
@@ -113,15 +117,8 @@ module Simple where
                 (n : SlPl w) → SlPl (SlGrft w δ ε)
     SlGrftPl₀ (dot i) δ ε ()
     SlGrftPl₀ (box c δ ε) δ₁ ε₁ (inl unit) = trans-lemma SlCn SlPl (assoc c δ δ₁) _ (inl unit)
-    SlGrftPl₀ (box c δ ε) δ₁ ε₁ (inr (p , n)) = trans-lemma SlCn SlPl (assoc c δ δ₁) _ (inr (p , IH p n)) 
-
+    SlGrftPl₀ (box c δ ε) δ₁ ε₁ (inr (p , n)) = trans-lemma SlCn SlPl (assoc c δ δ₁) _ (inr (p , SlGrftPl₀ (ε p) (δ₁' p) (ε₁' p) n)) 
       where open Local c δ ε δ₁ ε₁
-      
-            IH₀ : (p : ρ c) → SlCn (δ' p)
-            IH₀ p = SlGrft (ε p) (δ₁' p) (ε₁' p)
-
-            IH : (p : ρ c) → (n : SlPl (ε p)) → SlPl (IH₀ p)
-            IH p n = SlGrftPl₀ (ε p) (δ₁' p) (ε₁' p) n
 
     SlGrftPl₁ : {i : Idx} {c : γ i} (w : SlCn c)
                 (δ : (p : ρ c) → γ (τ p))
@@ -143,6 +140,16 @@ module Simple where
             -- right, well, the last guy is just "n" but the
             -- type has to be fixed up...
             
+    SlSplitPl : {i : Idx} {c : γ i} (w : SlCn c)
+                (δ : (p : ρ c) → (γ (τ p)))
+                (ε : (p : ρ c) → SlCn (δ p)) →
+                (n : SlPl (SlGrft w δ ε)) → SlPl w ⊔ Σ (ρ c) (λ p → SlPl (ε p))
+    SlSplitPl (dot i) δ₁ ε₁ n = inr (ηp i , {!!})  -- Essentially n, with type modification.
+    SlSplitPl (box c δ ε) δ₁ ε₁ n with <– (trans-eqv SlCn SlPl (assoc c δ δ₁) _) n
+    SlSplitPl (box c δ ε) δ₁ ε₁ n | inl unit = inl (inl unit)
+    SlSplitPl (box c δ ε) δ₁ ε₁ n | inr (p , n₁) = {!!}
+      where open Local c δ ε δ₁ ε₁
+      
   open Monad
   
   η-sl : (M : Monad) (b : SlIdx M) → SlCn' M b
@@ -155,8 +162,8 @@ module Simple where
   μ-pl : (M : Monad) {b : SlIdx M} (w : SlCn' M b) (κ : (p : SlPl M w) → SlCn' M (SlTy M w p)) → 
          Σ (SlPl M w) (SlPl M ∘ κ) → SlPl M (μ-sl M w κ)
   μ-pl M (dot i) κ (() , n₁)
-  μ-pl M (box c δ ε) κ (inl unit , n₁) = SlGrftPl₀ M (κ (inl unit)) δ _ n₁
-  μ-pl M (box c δ ε) κ (inr (p , n₀) , n₁) = SlGrftPl₁ M (κ (inl unit)) δ _ p IH
+  μ-pl M (box c δ ε) κ (inl unit , n₁) = SlGrftPl₀ M (κ (inl unit)) δ (λ p → μ-sl M (ε p) (λ q → κ (inr (p , q)))) n₁ 
+  μ-pl M (box c δ ε) κ (inr (p , n₀) , n₁) = SlGrftPl₁ M (κ (inl unit)) δ (λ p → μ-sl M (ε p) (λ q → κ (inr (p , q)))) p IH
 
     where κ' : (n : SlPl M (ε p)) → SlCn' M (SlTy M (ε p) n)
           κ' n = κ (inr (p , n))
@@ -164,7 +171,16 @@ module Simple where
           IH : SlPl M (μ-sl M (ε p) κ')
           IH = μ-pl M (ε p) κ' (n₀ , n₁)
           
+  μ-pl-inv : (M : Monad) {b : SlIdx M} (w : SlCn' M b) (κ : (p : SlPl M w) → SlCn' M (SlTy M w p)) → 
+             SlPl M (μ-sl M w κ) → Σ (SlPl M w) (SlPl M ∘ κ)
+  μ-pl-inv M (dot i) κ ()
+  μ-pl-inv M (box c δ ε) κ n with SlSplitPl M (κ (inl unit)) δ (λ p → μ-sl M (ε p) (λ q → κ (inr (p , q)))) n
+  μ-pl-inv M (box c δ ε) κ n | inl n₁ = inl unit , n₁
+  μ-pl-inv M (box c δ ε) κ n | inr (p , n₁) = inr (p , fst IH) , snd IH
 
+    where IH : Σ (SlPl M (ε p)) (λ n' → SlPl M (κ (inr (p , n'))))
+          IH = μ-pl-inv M (ε p) (λ n' → κ (inr (p , n'))) n₁
+    
   Sl : Monad → Monad
   Idx (Sl M) = SlIdx M
   γ (Sl M) = SlCn' M
