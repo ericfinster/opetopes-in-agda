@@ -5,7 +5,7 @@ module Polynomial where
 open import HoTT
 
 record Poly {ℓ} (I : Type ℓ) (J : Type ℓ) : Type (lsucc ℓ) where
-  constructor _≺_/_
+  constructor _≺_[_]
   field
     γ : (j : J) → Type ℓ
     ρ : {j : J} → (c : γ j) → Type ℓ
@@ -27,6 +27,9 @@ open Poly public
 
 ⟦_⟧ : ∀ {ℓ κ} {I J : Type ℓ} → Poly I J → (I → Type κ) → (J → Type (lmax ℓ κ))
 ⟦ P ⟧ X j = Σ (γ P j) (λ c → ⟦ P ⟧⟦ c ≺ X ⟧)
+
+fmap : ∀ {ℓ κ} {I J : Type ℓ} {P : Poly I J} → (I → Type κ) → (J → Type (lmax ℓ κ))
+fmap {P = γ ≺ ρ [ τ ]} X j = Σ (γ j) (λ c → Π (ρ c) (X ∘ τ) )
 
 ⟦_↓_⟧≃ : ∀ {ℓ} {I J : Type ℓ} (P : Poly I J)
          {j₀ j₁ : J} {q : j₀ == j₁} {c₀ : γ P j₀} {c₁ : γ P j₁}
