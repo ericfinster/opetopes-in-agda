@@ -40,7 +40,7 @@ module PolyMisc where
   ⊚-unit-l : ∀ {ℓ} {I : Type ℓ} (P : Poly I I) → P ⇝ IdP I ⊚ P
   γ-map (⊚-unit-l P) c = c , (λ x → lift tt)
   ρ-eqv (⊚-unit-l P) = (Σ₂-LUnit)⁻¹
-  τ-coh (⊚-unit-l P) p = idp 
+  τ-coh (⊚-unit-l P) p = idp
 
   ⊚-unit-inv-l : ∀ {ℓ} {I : Type ℓ} (P : Poly I I) → IdP I ⊚ P ⇝ P
   γ-map (⊚-unit-inv-l P) (c , φ) = c
@@ -60,15 +60,23 @@ module PolyMisc where
   -- Associativity of polynomial composition
   module _ {ℓ} {I J K L : Type ℓ} (P : Poly I J) (Q : Poly J K) (R : Poly K L) where
 
-    ⊚-assoc-r : (P ⊚ Q) ⊚ R ⇝ P ⊚ (Q ⊚ R) 
-    γ-map ⊚-assoc-r (c , φ) = (c , fst ∘ φ) , (λ { (p₀ , p₁) → snd (φ p₀) p₁ })
+    open ADMIT
+
+    ⊚-assoc-r : (P ⊚ Q) ⊚ R ⇝ P ⊚ (Q ⊚ R)
+    γ-map ⊚-assoc-r (c , φ) = (c , fst ∘ φ) , (λ { (r , q) → snd (φ r) q } )
     ρ-eqv ⊚-assoc-r {c = c , φ} = (Σ-assoc)⁻¹
     τ-coh ⊚-assoc-r {c = c , φ} (p , (l₀ , l₁)) = idp
 
-    ⊚-assoc-l : P ⊚ (Q ⊚ R) ⇝ (P ⊚ Q) ⊚ R 
+    ⊚-assoc-l : P ⊚ (Q ⊚ R) ⇝ (P ⊚ Q) ⊚ R
     γ-map ⊚-assoc-l ((c , φ) , ψ) = (c , λ p → (φ p , λ q → ψ (p , q)))
     ρ-eqv ⊚-assoc-l {c = (c , φ) , ψ} = Σ-assoc
     τ-coh ⊚-assoc-l {c = (c , φ) , ψ} p = idp
+
+    ⊚-assoc-l-r : ⊚-assoc-l ▶ ⊚-assoc-r ≈ poly-id (P ⊚ (Q ⊚ R))
+    ⊚-assoc-l-r (r , φ) = lcl-eqv idp (λ _ → idp) (λ _ → idp)
+
+    ⊚-assoc-r-l : ⊚-assoc-r ▶ ⊚-assoc-l ≈ poly-id ((P ⊚ Q) ⊚ R)
+    ⊚-assoc-r-l (r , φ) = lcl-eqv idp (λ _ → idp) (λ _ → idp)
 
   module _ {ℓ} {I J K : Type ℓ} (P : Poly I J) (Q R : Poly J K) where
 
@@ -79,4 +87,3 @@ module PolyMisc where
     ρ-eqv ⊚-dist-⊕ {c = inr cr , φ} = ide _
     τ-coh ⊚-dist-⊕ {c = inl cq , φ} p = idp
     τ-coh ⊚-dist-⊕ {c = inr cr , φ} p = idp
-

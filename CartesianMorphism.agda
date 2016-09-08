@@ -113,29 +113,29 @@ module CartesianMorphism where
     push-coh : (α : ⟦ f ∣ g ⟧⟦ P ⇒ Q ⟧)
                (X : I → Type ℓ) (Y : K → Type ℓ)
                (T : {i : I} → X i → Y (f i))
-               {j : J} {c : γ P j} (φ : ⟦ P ⟧⟦ c ≺ X ⟧) (p : ρ P c) → 
+               {j : J} {c : γ P j} (φ : ⟦ P ⟧⟦ c ≺ X ⟧) (p : ρ P c) →
                T (φ p) == push α X Y T φ (⟪ α ⟫↓ p) [ Y ↓ ⟪ α ⟫↓= p ]
     push-coh α X Y T φ p = from-transp Y (⟪ α ⟫↓= p) lemma
 
-      where φ-expand : transport Y (! (ap (f ∘ τ P) (⟪ α ⟫⇵ p))) (T (φ p)) == T (φ (⟪ α ⟫↑ (⟪ α ⟫↓ p))) 
+      where φ-expand : transport Y (! (ap (f ∘ τ P) (⟪ α ⟫⇵ p))) (T (φ p)) == T (φ (⟪ α ⟫↑ (⟪ α ⟫↓ p)))
             φ-expand = to-transp (!ᵈ (↓-ap-in Y (f ∘ τ P) (apd (T ∘ φ) (⟪ α ⟫⇵ p))))
 
             lemma = transport Y (⟪ α ⟫↓= p) (T (φ p))
                       =⟨ ! (⟪ α ⟫■ (⟪ α ⟫⇵ p))|in-ctx (λ x → transport Y x (T (φ p))) ⟩
                     transport Y (! (ap (f ∘ τ P) (⟪ α ⟫⇵ p)) ∙ ⟪ α ⟫↓= (⟪ α ⟫↑ (⟪ α ⟫↓ p)) ∙ ap (τ Q) (ap ⟪ α ⟫↓ (⟪ α ⟫⇵ p))) (T (φ p))
-                      =⟨ ⟪ α ⟫-adj p |in-ctx (λ x → transport Y (! (ap (f ∘ τ P) (⟪ α ⟫⇵ p)) ∙ ⟪ α ⟫↓= (⟪ α ⟫↑ (⟪ α ⟫↓ p)) ∙ ap (τ Q) x) (T (φ p))) ⟩ 
+                      =⟨ ⟪ α ⟫-adj p |in-ctx (λ x → transport Y (! (ap (f ∘ τ P) (⟪ α ⟫⇵ p)) ∙ ⟪ α ⟫↓= (⟪ α ⟫↑ (⟪ α ⟫↓ p)) ∙ ap (τ Q) x) (T (φ p))) ⟩
                     transport Y (! (ap (f ∘ τ P) (⟪ α ⟫⇵ p)) ∙ (⟪ α ⟫↓= (⟪ α ⟫↑ (⟪ α ⟫↓ p)) ∙ ap (τ Q) (⟪ α ⟫⇅ (⟪ α ⟫↓ p)))) (T (φ p))
-                      =⟨ trans-∙ (! (ap (f ∘ τ P) (⟪ α ⟫⇵ p))) (⟪ α ⟫↑= (⟪ α ⟫↓ p)) (T (φ p)) ⟩ 
+                      =⟨ trans-∙ (! (ap (f ∘ τ P) (⟪ α ⟫⇵ p))) (⟪ α ⟫↑= (⟪ α ⟫↓ p)) (T (φ p)) ⟩
                     transport Y (⟪ α ⟫↑= (⟪ α ⟫↓ p)) (transport Y (! (ap (f ∘ τ P) (⟪ α ⟫⇵ p))) (T (φ p)))
-                      =⟨ φ-expand |in-ctx (λ x → transport Y (⟪ α ⟫↑= (⟪ α ⟫↓ p)) x) ⟩ 
-                    transport Y (⟪ α ⟫↑= (⟪ α ⟫↓ p)) (T (φ (⟪ α ⟫↑ (⟪ α ⟫↓ p)))) ∎ 
+                      =⟨ φ-expand |in-ctx (λ x → transport Y (⟪ α ⟫↑= (⟪ α ⟫↓ p)) x) ⟩
+                    transport Y (⟪ α ⟫↑= (⟪ α ⟫↓ p)) (T (φ (⟪ α ⟫↑ (⟪ α ⟫↓ p)))) ∎
 
 
     -- Specialized to the case where T is the identity, the above
     -- induces an equivalence on decorations
     ⟪_∣_⟫⇓ : (α : ⟦ f ∣ g ⟧⟦ P ⇒ Q ⟧) (X : K → Type ℓ) {j : J} {c : γ P j} →
             ⟦ P ⟧⟦ c ≺ X ∘ f ⟧ → ⟦ Q ⟧⟦ ⟪ α ⟫ c ≺ X ⟧
-    ⟪ α ∣ X ⟫⇓ φ q = push α (X ∘ f) X (λ x → x) φ q 
+    ⟪ α ∣ X ⟫⇓ φ q = push α (X ∘ f) X (λ x → x) φ q
 
     ⟪_∣_⟫⇑ : (α : ⟦ f ∣ g ⟧⟦ P ⇒ Q ⟧) (X : K → Type ℓ) {j : J} {c : γ P j} →
             ⟦ Q ⟧⟦ ⟪ α ⟫ c ≺ X ⟧ → ⟦ P ⟧⟦ c ≺ X ∘ f ⟧
@@ -169,7 +169,7 @@ module CartesianMorphism where
     ⟪_∣_⟫⇓-coh : (α : ⟦ f ∣ g ⟧⟦ P ⇒ Q ⟧) (X : K → Type ℓ) {j : J} {c : γ P j}
                 (φ : ⟦ P ⟧⟦ c ≺ X ∘ f ⟧) (p : ρ P c) →
                  φ p == ⟪ α ∣ X ⟫⇓ φ (⟪ α ⟫↓ p) [ X ↓ ⟪ α ⟫↓= p ]
-    ⟪ α ∣ X ⟫⇓-coh φ = push-coh α (X ∘ f) X (λ x → x) φ 
+    ⟪ α ∣ X ⟫⇓-coh φ = push-coh α (X ∘ f) X (λ x → x) φ
 
     ⟪_∣_⟫⇑-coh : (α : ⟦ f ∣ g ⟧⟦ P ⇒ Q ⟧) (X : K → Type ℓ) {j : J} {c : γ P j}
                 (ψ : ⟦ Q ⟧⟦ ⟪ α ⟫ c ≺ X ⟧) (q : ρ Q (⟪ α ⟫ c)) →
@@ -251,6 +251,8 @@ module CartesianMorphism where
 
     infixr 50 _▶_
 
+    -- τ-coh is h f τP == h τQ α-ρ == τR β-ρ α-ρ
+
     _▶_ : (α : ⟦ f ∣ g ⟧⟦ P ⇒ Q ⟧) (β : ⟦ h ∣ k ⟧⟦ Q ⇒ R ⟧) → ⟦ h ∘ f ∣ k ∘ g ⟧⟦ P ⇒ R ⟧
     γ-map (α ▶ β) = ⟪ β ⟫ ∘ ⟪ α ⟫
     ρ-eqv (α ▶ β) = ⟪ β ⟫≃ ∘e ⟪ α ⟫≃
@@ -272,7 +274,7 @@ module CartesianMorphism where
     ⟪_∣_⟫⇕-coh : (α : ⟦ f ∣ g ⟧⟦ P ⇒ Q ⟧) (β : ⟦ g ∣ h ⟧⟦ R ⇒ S ⟧) {k : K} {c : γ R k} →
                 (φ : ⟦ R ⟧⟦ c ≺ γ P ⟧) (p : ρ R c) →
                 ⟪ α ⟫ (φ p) == ⟪ α ∣ β ⟫⇕ φ (⟪ β ⟫↓ p) [ γ Q ↓ ⟪ β ⟫↓= p ]
-    ⟪ α ∣ β ⟫⇕-coh φ = push-coh β (γ P) (γ Q) ⟪ α ⟫ φ 
+    ⟪ α ∣ β ⟫⇕-coh φ = push-coh β (γ P) (γ Q) ⟪ α ⟫ φ
 
     infixr 40 _∥_
 

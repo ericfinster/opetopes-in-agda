@@ -67,7 +67,7 @@ _⊗_ : ∀ {ℓ} {I J : Type ℓ} → Poly I J → Poly I J → Poly I J
 _⊚_ : ∀ {ℓ} {I J K : Type ℓ} → Poly I J → Poly J K → Poly I K
 γ (P ⊚ Q) = ⟦ Q ⟧ (γ P)
 ρ (P ⊚ Q) (c , φ) = Σ (ρ Q c) (ρ P ∘ φ)
-τ (P ⊚ Q) (q , p) = τ P p
+τ (P ⊚ Q) (_ , p) = τ P p
 
 _–_ : ∀ {ℓ} (I : Type ℓ) (i : I) → Type ℓ
 I – i = Σ I (λ i' → i ≠ i')

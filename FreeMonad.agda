@@ -46,6 +46,13 @@ module FreeMonad where
     fr-μ : FrP ⊚ FrP ⇝ FrP
     fr-μ = fr-fix fr-P
 
+    {-# TERMINATING #-}
+    fr-μ′ : FrP ⊚ FrP ⇝ FrP
+    γ-map fr-μ′ (leaf i , ψ) = ψ lt
+    γ-map fr-μ′ (node (c , φ) , ψ) = node (c , (λ p → γ-map fr-μ′ (φ p , (λ p′ → ψ (p , p′)))))
+    ρ-eqv fr-μ′ = {!!}
+    τ-coh fr-μ′ = {!!}
+
     -- Any polynomial with a "unit" and "multiplication" admits a map from FrP
     -- fr-univ : {Q : Poly I I} (η₀ : IdP I ⇝ Q) (μ₀ : Q ⊚ P ⇝ Q) → FrP ⇝ Q
     -- fr-univ {Q} η₀ μ₀ = ⊚-unit-l FrP ▶ (η₀ ∥ poly-id FrP) ▶ fr-fix μ₀
@@ -54,7 +61,7 @@ module FreeMonad where
 
     fr-η-left-law : ⊚-unit-l FrP ▶ (fr-η ∥ poly-id FrP) ▶ fr-μ ≈ poly-id FrP
     fr-η-left-law (leaf i) = lcl-eqv idp (λ _ → idp) (λ _ → idp)
-    fr-η-left-law (node (c , φ)) = lcl-eqv γ-eq {!ρ-eq!} {!!}
+    fr-η-left-law (node (c , φ)) = lcl-eqv γ-eq ρ-eq ADMIT
        where IH : (p : ρ P c) → (⊚-unit-l FrP ▶ (fr-η ∥ poly-id FrP) ▶ fr-μ) ≈ (poly-id FrP) ⓐ φ p
              IH p = fr-η-left-law (φ p)
 
@@ -78,15 +85,19 @@ module FreeMonad where
     ρ≈ (fr-η-right-law c) p = idp
     τ≈ (fr-η-right-law c) p = idp
 
-    -- fr-μ-assoc-law : ⊚-assoc-r FrP FrP FrP ▶ (poly-id FrP ∥ fr-μ) ▶ fr-μ ≈ (fr-μ ∥ poly-id FrP) ▶ fr-μ
-    -- fr-μ-assoc-law = ADMIT
+    fr-μ-assoc-law : ⊚-assoc-r FrP FrP FrP ▶ (poly-id FrP ∥ fr-μ) ▶ fr-μ ≈ (fr-μ ∥ poly-id FrP) ▶ fr-μ
+    fr-μ-assoc-law (leaf i , ψ) = lcl-eqv idp (λ p → idp) ADMIT
+    fr-μ-assoc-law (node (c , φ) , ψ) = lcl-eqv {!!} {!!} ADMIT
+      where γ-eq : ⟪ ⊚-assoc-r FrP FrP FrP ▶ (poly-id FrP ∥ fr-μ) ▶ fr-μ ⟫ (node (c , φ) , ψ) ==
+                   ⟪ (fr-μ ∥ poly-id FrP) ▶ fr-μ ⟫ (node (c , φ) , ψ)
+            γ-eq = {!!}
+
 
     FrM : PolyMonad I
     MP FrM = FrP
     η FrM = fr-η
     μ FrM = fr-μ
 
-    -- don't do τ≈
     η-left-law FrM = fr-η-left-law
     η-right-law FrM = fr-η-right-law
     μ-assoc-law FrM = ADMIT
