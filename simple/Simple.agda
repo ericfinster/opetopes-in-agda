@@ -90,44 +90,39 @@ module Simple where
       node : ∀ {i} → (c : γ i) (δ : (p : ρ c) → FrCn (τ p)) → FrCn i
 
     FrPl : ∀ {i} → FrCn i → Type₀
-    FrPl (leaf i) = ⊥
-    FrPl (node c δ) = ⊤ ⊔ Σ (ρ c) (λ p → FrPl (δ p))
+    FrPl (leaf i) = ⊤
+    FrPl (node c δ) = Σ (ρ c) (λ p → FrPl (δ p))
 
     FrTy : ∀ {i} {w : FrCn i} (n : FrPl w) → FrIdx
-    FrTy {w = leaf i} ()
-    FrTy {i} {node c δ} (inl _) = i
-    FrTy {w = node c δ} (inr (p , n)) = FrTy n
+    FrTy {i} {leaf _} _ = i
+    FrTy {w = node c δ} (p , p′) = FrTy {w = δ p} p′
 
     η-fr : (i : FrIdx) → FrCn i
     η-fr i = leaf i
 
     μ-fr : ∀ {i} (c : FrCn i) → (φ : (p : FrPl c) → FrCn (FrTy p)) → FrCn i
     μ-fr (leaf i) δ = leaf i
-    μ-fr (node c φ) ψ = node c (λ p → μ-fr (φ p) (λ p′ → ψ (inr (p , p′))))
+    μ-fr (node c φ) ψ = node c (λ p → μ-fr (φ p) (λ p′ → ψ (p , p′)))
 
-
-    -- ?(1)
-    ηp-eqv-fr : {i : FrIdx} → ⊤ ≃ ⊥
-    ηp-eqv-fr = {!!}
+    ηp-eqv-fr : {i : FrIdx} → ⊤ ≃ ⊤
+    ηp-eqv-fr = (λ _ → _) , is-eq (λ _ → _) (λ _ → _) (λ _ → idp) (λ _ → idp)
 
     --[ μp-eqv ...
-    μ-pl-fr : ∀ {i} {c : FrCn i} (δ : (p : FrPl c) → FrCn (FrTy p)) → Σ (FrPl c) (FrPl ∘ δ) → FrPl (μ-fr c δ)
-    μ-pl-fr {c = leaf _} _ (() , _)
-    μ-pl-fr {c = node c φ} ψ (inl _ , n) = {!!}
-    μ-pl-fr {c = node c φ} ψ (inr x , q) = {!!}
+    μ-pl-fr : ∀ {i} (c : FrCn i) (δ : (p : FrPl c) → FrCn (FrTy p)) → Σ (FrPl c) (FrPl ∘ δ) → FrPl (μ-fr c δ)
+    μ-pl-fr (leaf i) δ x = unit
+    μ-pl-fr (node c δ) φ ((p , p′) , p,p′) = p , {!!}
 
     μ-pl-fr! : ∀ {i} {c : FrCn i} (δ : (p : FrPl c) → FrCn (FrTy p)) → FrPl (μ-fr c δ) → Σ (FrPl c) (FrPl ∘ δ)
     μ-pl-fr! = {!!}
 
     μp-eqv-fr : ∀ {i} {c : FrCn i} (δ : (p : FrPl c) → FrCn (FrTy p))
           → Σ (FrPl c) (FrPl ∘ δ) ≃ (FrPl (μ-fr c δ))
-    μp-eqv-fr {c = leaf _} δ = {!!} --?
-    μp-eqv-fr {c = node c δ} φ = {!!}
-    --μp-eqv-fr {c = c} δ = μ-pl-fr δ , is-eq (μ-pl-fr δ) (μ-pl-fr! δ) {!!} {!!}
+    μp-eqv-fr {c = leaf _} δ = {!Σ₁-Unit {B = FrPl ∘ δ}!}
+    μp-eqv-fr {c = node c δ} δ₁ = {!!}
     --]
 
-    ηp-compat-fr : ∀ {i} → FrTy (–> ηp-eqv-fr unit) == i
-    ηp-compat-fr = {!!}
+    ηp-compat-fr : {i : FrIdx} → i == i
+    ηp-compat-fr = idp
 
     μp-compat-fr : ∀ {i} (c : FrCn i) (δ : (p : FrPl c) → FrCn (FrTy p))
                 (p : FrPl c) (q : FrPl (δ p))
@@ -135,10 +130,17 @@ module Simple where
     μp-compat-fr = {!!}
 
     unit-l-fr : ∀ {i} (c : FrCn i) → μ-fr c (λ p → η-fr (FrTy p)) == c
-    unit-l-fr = {!!}
+    unit-l-fr (leaf i) = idp
+    unit-l-fr (node c δ) = {!!}
 
-    unit-r-fr : ∀ {i} (δ : (p : ⊥) → FrCn (FrTy p)) → {!!}
-    unit-r-fr = {!!}
+    unit-r-fr : ∀ {i} (δ : (p : ⊤) → FrCn i)
+             → δ (–> (ηp-eqv-fr {i}) unit) == leaf i
+    unit-r-fr {i} δ =
+      δ (–> (ηp-eqv-fr {i}) unit)
+        =⟨ idp ⟩
+      δ unit
+        =⟨ {!!} ⟩
+      leaf i ∎
 
     assoc-fr : ∀ {i} (c : FrCn i) (δ : (p : FrPl c) → FrCn (FrTy p))
                (ε : (q : FrPl (μ-fr c δ)) → FrCn (FrTy q))
@@ -155,12 +157,12 @@ module Simple where
     Monad.τ (Fr M) = FrTy
     η (Fr M) = η-fr
     μ (Fr M) = μ-fr
-    ηp-eqv (Fr M) = ηp-eqv-fr -- ?(1)
+    ηp-eqv (Fr M) {i} = ηp-eqv-fr {i}
     μp-eqv (Fr M) = μp-eqv-fr
     ηp-compat (Fr M) = ηp-compat-fr
     μp-compat (Fr M) {c = c} {δ = δ} = μp-compat-fr c δ
     unit-l (Fr M) = unit-l-fr
-    unit-r (Fr M) = {!unit-r-fr!}
+    unit-r (Fr M) = unit-r-fr
     assoc (Fr M) = assoc-fr
 
   --
