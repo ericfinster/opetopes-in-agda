@@ -74,6 +74,9 @@ module Simple where
               (ε : (q : ρ (μ c δ)) → γ (τ q))
            → μ c (λ p → μ (δ p) (λ q → transport γ (μp-compat p q) (ε (μp δ p q)))) == μ (μ c δ) ε
 
+      unit-l-ρ : {i : Idx} (c : γ i) (p : ρ c) (p′ : ρ (η (τ p)))
+              → μp (λ r → η (τ r)) p p′ == ADMIT
+
   --
   -- The Free Monad
   --
@@ -101,46 +104,42 @@ module Simple where
     η-fr i = leaf i
 
     μ-fr : ∀ {i} (c : FrCn i) → (φ : (p : FrPl c) → FrCn (FrTy p)) → FrCn i
-    μ-fr (leaf i) δ = leaf i
+    μ-fr (leaf i) δ = δ unit
     μ-fr (node c φ) ψ = node c (λ p → μ-fr (φ p) (λ p′ → ψ (p , p′)))
 
     ηp-eqv-fr : {i : FrIdx} → ⊤ ≃ ⊤
     ηp-eqv-fr = (λ _ → _) , is-eq (λ _ → _) (λ _ → _) (λ _ → idp) (λ _ → idp)
 
-    --[ μp-eqv ...
-    μ-pl-fr : ∀ {i} (c : FrCn i) (δ : (p : FrPl c) → FrCn (FrTy p)) → Σ (FrPl c) (FrPl ∘ δ) → FrPl (μ-fr c δ)
-    μ-pl-fr (leaf i) δ x = unit
-    μ-pl-fr (node c δ) φ ((p , p′) , p,p′) = p , {!!}
+    -- μ-pl-fr : ∀ {i} (c : FrCn i) (δ : (p : FrPl c) → FrCn (FrTy p)) → Σ (FrPl c) (FrPl ∘ δ) → FrPl (μ-fr c δ)
+    -- μ-pl-fr (leaf i) δ (unit , p) = p
+    -- μ-pl-fr (node c δ) φ ((p , p′) , p,p′) = p , {!!}
 
-    μ-pl-fr! : ∀ {i} {c : FrCn i} (δ : (p : FrPl c) → FrCn (FrTy p)) → FrPl (μ-fr c δ) → Σ (FrPl c) (FrPl ∘ δ)
-    μ-pl-fr! = {!!}
+    -- μ-pl-fr! : ∀ {i} {c : FrCn i} (δ : (p : FrPl c) → FrCn (FrTy p)) → FrPl (μ-fr c δ) → Σ (FrPl c) (FrPl ∘ δ)
+    -- μ-pl-fr! = {!!}
 
     μp-eqv-fr : ∀ {i} {c : FrCn i} (δ : (p : FrPl c) → FrCn (FrTy p))
-          → Σ (FrPl c) (FrPl ∘ δ) ≃ (FrPl (μ-fr c δ))
-    μp-eqv-fr {c = leaf _} δ = {!Σ₁-Unit {B = FrPl ∘ δ}!}
-    μp-eqv-fr {c = node c δ} δ₁ = {!!}
-    --]
+             → Σ (FrPl c) (FrPl ∘ δ) ≃ FrPl (μ-fr c δ)
+    μp-eqv-fr {c = leaf _} _ = Σ₁-Unit
+    μp-eqv-fr {c = node c φ} ψ = equiv-Σ-snd (λ p → μp-eqv-fr (λ p′ → ψ (p , p′))) ∘e Σ-assoc
 
     ηp-compat-fr : {i : FrIdx} → i == i
     ηp-compat-fr = idp
 
     μp-compat-fr : ∀ {i} (c : FrCn i) (δ : (p : FrPl c) → FrCn (FrTy p))
-                (p : FrPl c) (q : FrPl (δ p))
-             → FrTy (–> (μp-eqv-fr δ) (p , q)) == FrTy q
-    μp-compat-fr = {!!}
+                   (p : FrPl c) (q : FrPl (δ p))
+                → FrTy (–> (μp-eqv-fr δ) (p , q)) == FrTy q
+    μp-compat-fr (leaf i) δ p q = idp
+    μp-compat-fr (node c φ) ψ (p , q) r = μp-compat-fr (φ p) (λ p′ → ψ (p , p′)) q r
 
-    unit-l-fr : ∀ {i} (c : FrCn i) → μ-fr c (λ p → η-fr (FrTy p)) == c
+    --[ So far, just γ-eqs. We need to add ρ-eqs and talk about τ-eqs
+    unit-l-fr : ∀ {i} (c : FrCn i)
+             → μ-fr c (λ p → η-fr (FrTy p)) == c
     unit-l-fr (leaf i) = idp
-    unit-l-fr (node c δ) = {!!}
+    unit-l-fr (node c δ) = ap (λ x → node c x) (λ= (λ x → unit-l-fr (δ x)))
 
     unit-r-fr : ∀ {i} (δ : (p : ⊤) → FrCn i)
-             → δ (–> (ηp-eqv-fr {i}) unit) == leaf i
-    unit-r-fr {i} δ =
-      δ (–> (ηp-eqv-fr {i}) unit)
-        =⟨ idp ⟩
-      δ unit
-        =⟨ {!!} ⟩
-      leaf i ∎
+             → δ (–> (ηp-eqv-fr {i}) unit) == δ unit
+    unit-r-fr {i} δ = idp
 
     assoc-fr : ∀ {i} (c : FrCn i) (δ : (p : FrPl c) → FrCn (FrTy p))
                (ε : (q : FrPl (μ-fr c δ)) → FrCn (FrTy q))
@@ -148,7 +147,9 @@ module Simple where
                        μ-fr (δ p) (λ q →
                                    transport FrCn (μp-compat-fr c δ p q) (ε (–> (μp-eqv-fr δ) (p , q)))))
                == μ-fr (μ-fr c δ) ε
-    assoc-fr = {!!}
+    assoc-fr (leaf i) δ ε = idp
+    assoc-fr (node c δ) φ ψ = ap (λ x → node c x) (λ= (λ x → assoc-fr (δ x) (λ p → φ (x , p)) (λ q → ψ (x , q))))
+    --]
 
     Fr : Poly → Monad
     Monad.Idx (Fr P) = FrIdx
@@ -164,6 +165,8 @@ module Simple where
     unit-l (Fr M) = unit-l-fr
     unit-r (Fr M) = unit-r-fr
     assoc (Fr M) = assoc-fr
+    -----
+    unit-l-ρ (Fr M) = ADMIT
 
   --
   --  The Slice Monad
@@ -305,3 +308,5 @@ module Simple where
   unit-l (Sl M) = ADMIT
   unit-r (Sl M) = ADMIT
   assoc (Sl M) = ADMIT
+  -----
+  unit-l-ρ (Sl M)= ADMIT
