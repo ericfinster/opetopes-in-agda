@@ -49,43 +49,4 @@ module PolynomialMonad where
       where lemma : {i : I} → X i ≃ ((p : ρ (IdP I) {i} lt) → X (τ (IdP I) {i} {lt} p))
             lemma {i} = equiv (λ x → cst x) (λ f → f lt) (λ f → λ= (λ x → idp)) (λ x → idp)
 
-    η-dec-unique : {i₀ i₁ : I} → (p : i₀ == i₁) →
-                   (δ₀ : ⟦ P ⟧⟦ ⟪ η ⟫ {i₀} lt ≺ γ P ⟧) →
-                   (δ₁ : ⟦ P ⟧⟦ ⟪ η ⟫ {i₁} lt ≺ γ P ⟧) →
-                   δ₀ (η-plc i₀) == δ₁ (η-plc i₁) [ _ ↓ p ] →
-                   δ₀ == δ₁ [ (λ j → ⟦ P ⟧⟦ ⟪ η ⟫ {j} lt ≺ γ P ⟧) ↓ p ]
-    η-dec-unique idp δ₀ δ₁ r = ADMIT
 
-
-    η-unfold : (i : I) → (δ : ⟦ P ⟧⟦ η-cns i ≺ γ P ⟧) →
-               ⟪ μ ⟫ (η-cns i , δ) == δ (η-plc i) [ γ P ↓ ⟪ η ⟫↓= lt ]
-    η-unfold i δ = lemma₁ ∙'ᵈ (γ≈ (η-right-law (δ (η-plc i))))
-
-       where α : ⟪ ⊚-unit-r P ▶ (poly-id P ∥ η) ▶ μ ⟫ (δ (η-plc i)) == (δ (η-plc i))
-             α = γ≈ (η-right-law (δ (η-plc i)))
-
-             β : ⟪ ⊚-unit-r P ▶ (poly-id P ∥ η) ▶ μ ⟫ (δ (η-plc i)) == (δ (η-plc i)) 
-             β = ⟪ ⊚-unit-r P ▶ (poly-id P ∥ η) ▶ μ ⟫ (δ (η-plc i)) =⟨ idp ⟩
-                 ⟪ μ ⟫ (⟪ ⊚-unit-r P ▶ (poly-id P ∥ η) ⟫ (δ (η-plc i))) =⟨ idp ⟩
-                 ⟪ μ ⟫ (⟪ poly-id P ∥ η ⟫ (⟪ ⊚-unit-r P ⟫ (δ (η-plc i)))) =⟨ idp ⟩
-                 ⟪ μ ⟫ (⟪ poly-id P ∥ η ⟫ (lt , λ _ → δ (η-plc i))) =⟨ idp ⟩
-                 ⟪ μ ⟫ (⟪ η ⟫ lt , ⟪ poly-id P ∣ η ⟫⇕ (cst (δ (η-plc i)))) =⟨ α ⟩
-                 (δ (η-plc i))  ∎
-
-             blorp : ⟦ P ⟧⟦ ⟪ η ⟫ {τ P (η-plc i)} lt ≺ γ P ⟧
-             blorp = ⟪ poly-id P ∣ η ⟫⇕ (cst (δ (η-plc i)))
-
-             bleep : ⟦ P ⟧⟦ ⟪ η ⟫ {i} lt ≺ γ P ⟧
-             bleep = δ
-
-             lemma : δ == ⟪ poly-id P ∣ η ⟫⇕ (cst (δ (η-plc i))) [ (λ j → ⟦ P ⟧⟦ ⟪ η ⟫ {j} lt ≺ γ P ⟧) ↓ ⟪ η ⟫↓= lt ]
-             lemma = ADMIT
-
-             lemma₁ : ⟪ μ ⟫ (⟪ η ⟫ lt , δ) == ⟪ μ ⟫ (⟪ η ⟫ lt , ⟪ poly-id P ∣ η ⟫⇕ (cst (δ (η-plc i)))) [ γ P ↓ ⟪ η ⟫↓= lt ]
-             lemma₁ = ap↓ (λ δ' → ⟪ μ ⟫ (⟪ η ⟫ lt , δ')) lemma
-
-             fred : δ (η-plc i) == ⟪ poly-id P ∣ η ⟫⇕ (cst (δ (η-plc i))) (⟪ η ⟫↓ lt) [ γ P ↓ ⟪ η ⟫↓= lt ]
-             fred = ⟪ poly-id P ∣ η ⟫⇕-coh (cst (δ (η-plc i))) lt
-
-             wilma : δ (η-plc i) == transport (γ P) (⟪ η ⟫↑= (⟪ η ⟫↓ lt)) (δ (η-plc i)) [ γ P ↓ ⟪ η ⟫↓= lt ]
-             wilma = ⟪ poly-id P ∣ η ⟫⇕-coh (cst (δ (η-plc i))) lt
