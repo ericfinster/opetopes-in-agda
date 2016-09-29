@@ -74,8 +74,8 @@ module Simple where
               (ε : (q : ρ (μ c δ)) → γ (τ q))
            → μ c (λ p → μ (δ p) (λ q → transport γ (μp-compat p q) (ε (μp δ p q)))) == μ (μ c δ) ε
 
-      unit-l-ρ : {i : Idx} (c : γ i) (p : ρ c) (p′ : ρ (η (τ p)))
-              → μp (λ r → η (τ r)) p p′ == ADMIT
+      unit-l-ρ : {i : Idx} (c : γ i) (p : ρ c)
+              → μp (λ pp → η (τ pp)) p (ηp (τ p)) == p [ ρ ↓ unit-l c ]
 
   --
   -- The Free Monad
