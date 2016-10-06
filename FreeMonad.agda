@@ -65,7 +65,7 @@ module FreeMonad where
              ρ-eq : (p : ρ FrP (node (c , φ))) →
                     (⟪ ⊚-unit-l FrP ▶ (fr-η ∥ poly-id FrP) ▶ fr-μ ⟫↓ p) ==
                     (⟪ poly-id FrP ⟫↓ p) [ ρ FrP ↓ γ-eq ]
-             ρ-eq (p , l) = ↓-leaf-lcl-in (γ≈ ∘ IH) (ρ≈ (IH p) l)
+             ρ-eq (p , l) = ADMIT -- ↓-leaf-lcl-in (γ≈ ∘ IH) (ρ≈ (IH p) l)
 
 --             τ-eq : (p : ρ FrP (node (c , φ))) →
 --                    (⟪ ⊚-unit-l FrP ▶ (fr-η ∥ poly-id FrP) ▶ fr-μ ⟫↓= p) ==

@@ -75,25 +75,65 @@ module Simple where
 
     open PolyMonad M
 
-    theorem : Monad
-    Monad.Idx theorem = I
-    Monad.P theorem = P
-    Monad.η theorem _ = ⟪ η ⟫ _
-    Monad.μ theorem c δ = ⟪ μ ⟫ (c , δ)
-    Monad.ηp-eqv theorem = (λ _ → η-plc M _) ,
+    thm-idx : Type₀
+    thm-idx = I
+
+    thm-P : Poly I I
+    thm-P = P
+
+    thm-η : (i : I) → γ P i
+    thm-η i = ⟪ η ⟫ lt
+
+    thm-μ : {i : I} (c : γ P i) (δ : (p : ρ P c) → γ P (τ P p)) → γ P i
+    thm-μ c δ = ⟪ μ ⟫ (c , δ)
+
+    thm-ηp-eqv : {i : I} → ⊤ ≃ ρ P (thm-η i)
+    thm-ηp-eqv = (λ _ → η-plc M _) ,
       (is-eq (λ _ → η-plc M _) (λ _ → unit) (snd (η-plc-contr M _)) (λ _ → idp))
-    Monad.μp-eqv theorem _ = ⟪ μ ⟫↓ , is-eq ⟪ μ ⟫↓ ⟪ μ ⟫↑  ⟪ μ ⟫⇅ ⟪ μ ⟫⇵
-    Monad.ηp-compat theorem =  ! (⟪ η ⟫↓= lt)
-    Monad.μp-compat theorem p q = ! (⟪ μ ⟫↓= (p , q))
-    Monad.unit-l theorem = γ≈ ∘ η-left-law
-    --Monad.unit-r theorem {i} δ = from-transp (γ P) (! (⟪ η ⟫↓= lt)) lemma
-    Monad.unit-r theorem {i} δ = from-transp (γ P) (! (⟪ η ⟫↓= lt)) lemma
-      where
-        lemma : transport (γ P) (! (⟪ η ⟫↓= lt)) (δ (⟪ η ⟫↓ lt)) == ⟪ μ ⟫ (⟪ η ⟫ lt , δ)
-        lemma = transport (γ P) (! (⟪ η ⟫↓= lt)) (δ (⟪ η ⟫↓ lt))
-                  =⟨ {!transport (γ P) (! (⟪ η ⟫↓= lt)) (δ (⟪ η ⟫↓ lt))!} ⟩
-                {!f!}
-                  =⟨ {!transport (γ P) (! (⟪ η ⟫↓= lt)) (δ (⟪ η ⟫↓ lt))!} ⟩
-                ⟪ μ ⟫ (⟪ η ⟫ lt , δ) ∎
-    --Monad.unit-r theorem {i} δ = ⟪ η ∣ {!!} ⟫⇓ {!!} {!!}
-    Monad.assoc theorem c δ ε = {!!}
+
+    thm-μp-eqv : {i : thm-idx} {c : γ P i} (δ : (p : ρ P c) → γ P (τ P p)) →
+                 Σ (ρ P c) ((ρ P) ∘ δ) ≃ ρ P (thm-μ c δ)
+    thm-μp-eqv {c = c} δ = ⟪ μ ⟫≃ {c = (c , δ)} 
+
+    thm-ηp-compat : {i : thm-idx} → τ P (–> thm-ηp-eqv unit) == i
+    thm-ηp-compat = ! (⟪ η ⟫↓= lt)
+
+    thm-μp-compat : {i : thm-idx} {c : γ P i} {δ : (p : ρ P c) → γ P (τ P p)}
+                    (p : ρ P c) (q : ρ P (δ p)) → τ P (–> (thm-μp-eqv δ) (p , q)) == τ P q
+    thm-μp-compat p q = ! (⟪ μ ⟫↓= (p , q))
+
+
+    thm-unit-l : {i : thm-idx} (c : γ P i) → thm-μ c (λ p → thm-η (τ P p)) == c
+    thm-unit-l = γ≈ ∘ η-left-law 
+    
+    thm-unit-r : {i : thm-idx} (δ : (p : ρ P (thm-η i)) → γ P (τ P p)) →
+                 δ (–> thm-ηp-eqv unit) == ⟪ μ ⟫ (⟪ η ⟫ lt , δ) [ γ P ↓ thm-ηp-compat ]
+    thm-unit-r {i} δ = {!!}
+
+      where c : γ P (τ P (–> thm-ηp-eqv unit))
+            c = δ (–> thm-ηp-eqv unit) 
+
+            δ' : ⟦ P ⟧⟦ ⟪ η ⟫ lt ≺ γ P ⟧
+            δ' = δ
+
+            const-dec : ⟦ P ⟧⟦ ⟪ η ⟫ lt ≺ γ P ⟧
+            const-dec = ⟪ poly-id P ∣ η ⟫⇕ (cst c)
+
+            hyp : ⟪ μ ⟫ (⟪ η ⟫ lt , const-dec) == c
+            hyp = (γ≈ ∘ η-right-law) c
+
+            lemma : (p : ρ P (thm-η i)) → δ p == const-dec {!p!} [ γ P ↓ {!!} ]
+            lemma = {!!}
+
+    theorem : Monad
+    Monad.Idx theorem = thm-idx
+    Monad.P theorem = P
+    Monad.η theorem = thm-η
+    Monad.μ theorem = thm-μ
+    Monad.ηp-eqv theorem = thm-ηp-eqv
+    Monad.μp-eqv theorem = thm-μp-eqv
+    Monad.ηp-compat theorem = thm-ηp-compat
+    Monad.μp-compat theorem = thm-μp-compat
+    Monad.unit-l theorem = {!!}
+    Monad.unit-r theorem = thm-unit-r
+    Monad.assoc theorem = {!!}
