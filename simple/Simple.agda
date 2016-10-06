@@ -1,6 +1,7 @@
 {-# OPTIONS --without-K #-}
 
 open import HoTT
+open import PolyMonad
 
 module Simple where
 
@@ -76,6 +77,33 @@ module Simple where
 
       unit-l-ρ : {i : Idx} (c : γ i) (p : ρ c)
               → μp (λ pp → η (τ pp)) p (ηp (τ p)) == p [ ρ ↓ unit-l c ]
+
+  --
+  -- A Polynomial monad is a simple monad
+  --
+
+  module _ {I : Type₀} (M : PolyMonad I) where
+
+    open PolyMonad M
+
+    η-simple-test : {i : I} (c : γ P i) → ⟪ μ ⟫ (c , (λ p → ⟪ η ⟫ lt)) == c
+    η-simple-test c = {!!}
+
+    theorem : Monad
+    Monad.Idx theorem = I
+    Monad.P theorem = P
+    Monad.η theorem i = ⟪ η ⟫ lt
+    Monad.μ theorem c δ = ⟪ μ ⟫ (c , δ)
+    Monad.ηp-eqv theorem = {!!}
+    Monad.μp-eqv theorem δ = {!!}
+    Monad.ηp-compat theorem = {!!}
+    Monad.μp-compat theorem p q = {!!}
+    Monad.unit-l theorem c = η-simple-test c
+    Monad.unit-r theorem δ = {!!}
+    Monad.assoc theorem c δ ε = {!!}
+
+
+
 
   --
   -- The Free Monad

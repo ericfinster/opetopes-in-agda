@@ -75,127 +75,25 @@ module Simple where
 
     open PolyMonad M
 
-    η-simple-test : {i : I} (c : γ P i) → ⟪ μ ⟫ (c , (λ p → ⟪ η ⟫ lt)) == c
-    η-simple-test c = {!!}
-
     theorem : Monad
     Monad.Idx theorem = I
     Monad.P theorem = P
-    Monad.η theorem i = ⟪ η ⟫ lt
+    Monad.η theorem _ = ⟪ η ⟫ _
     Monad.μ theorem c δ = ⟪ μ ⟫ (c , δ)
-    Monad.ηp-eqv theorem = {!!}
-    Monad.μp-eqv theorem δ = {!!}
-    Monad.ηp-compat theorem = {!!}
-    Monad.μp-compat theorem p q = {!!}
-    Monad.unit-l theorem c = η-simple-test c
-    Monad.unit-r theorem δ = {!!}
+    Monad.ηp-eqv theorem = (λ _ → η-plc M _) ,
+      (is-eq (λ _ → η-plc M _) (λ _ → unit) (snd (η-plc-contr M _)) (λ _ → idp))
+    Monad.μp-eqv theorem _ = ⟪ μ ⟫↓ , is-eq ⟪ μ ⟫↓ ⟪ μ ⟫↑  ⟪ μ ⟫⇅ ⟪ μ ⟫⇵
+    Monad.ηp-compat theorem =  ! (⟪ η ⟫↓= lt)
+    Monad.μp-compat theorem p q = ! (⟪ μ ⟫↓= (p , q))
+    Monad.unit-l theorem = γ≈ ∘ η-left-law
+    --Monad.unit-r theorem {i} δ = from-transp (γ P) (! (⟪ η ⟫↓= lt)) lemma
+    Monad.unit-r theorem {i} δ = from-transp (γ P) (! (⟪ η ⟫↓= lt)) lemma
+      where
+        lemma : transport (γ P) (! (⟪ η ⟫↓= lt)) (δ (⟪ η ⟫↓ lt)) == ⟪ μ ⟫ (⟪ η ⟫ lt , δ)
+        lemma = transport (γ P) (! (⟪ η ⟫↓= lt)) (δ (⟪ η ⟫↓ lt))
+                  =⟨ {!transport (γ P) (! (⟪ η ⟫↓= lt)) (δ (⟪ η ⟫↓ lt))!} ⟩
+                {!f!}
+                  =⟨ {!transport (γ P) (! (⟪ η ⟫↓= lt)) (δ (⟪ η ⟫↓ lt))!} ⟩
+                ⟪ μ ⟫ (⟪ η ⟫ lt , δ) ∎
+    --Monad.unit-r theorem {i} δ = ⟪ η ∣ {!!} ⟫⇓ {!!} {!!}
     Monad.assoc theorem c δ ε = {!!}
-
-
-      -- unit-l : {i : Idx} → (c : γ P i) → μ c (λ p → η (τ P p)) == c
-
---   --
---   -- The Free Monad
---   --
-
---   module  _ (Idx : Type₀) (P : Poly Idx Idx) where
-
---     FrIdx : Type₀
---     FrIdx = Idx
-
---     data FrCn : (i : FrIdx) → Type₀ where
---       leaf : ∀ i → FrCn i
---       node : ∀ {i} → (c : γ P i) (δ : (p : ρ P c) → FrCn (τ P p)) → FrCn i
-
---     frcn→w : ∀ {i} → FrCn i → W P i
---     frcn→w (leaf _) = leaf _
---     frcn→w (node c δ) = node (c , (λ p → frcn→w (δ p)))
-
---     FrPl : ∀ {i} → FrCn i → Type₀
---     FrPl (leaf i) = ⊤
---     FrPl (node c δ) = Σ (ρ P c) (λ p → FrPl (δ p))
-
---     FrTy : ∀ {i} {w : FrCn i} (n : FrPl w) → FrIdx
---     FrTy {i} {leaf _} _ = i
---     FrTy {w = node c δ} (p , p′) = FrTy {w = δ p} p′
-
---     η-fr : (i : FrIdx) → FrCn i
---     η-fr i = leaf i
-
---     μ-fr : ∀ {i} (c : FrCn i) → (φ : (p : FrPl c) → FrCn (FrTy p)) → FrCn i
---     μ-fr (leaf i) δ = δ unit
---     μ-fr (node c φ) ψ = node c (λ p → μ-fr (φ p) (λ p′ → ψ (p , p′)))
-
---     ηp-eqv-fr : {i : FrIdx} → ⊤ ≃ ⊤
---     ηp-eqv-fr = (λ _ → _) , is-eq (λ _ → _) (λ _ → _) (λ _ → idp) (λ _ → idp)
-
---     μp-eqv-fr : ∀ {i} {c : FrCn i} (δ : (p : FrPl c) → FrCn (FrTy p))
---              → Σ (FrPl c) (FrPl ∘ δ) ≃ FrPl (μ-fr c δ)
---     μp-eqv-fr {c = leaf _} _ = Σ₁-Unit
---     μp-eqv-fr {c = node c φ} ψ = equiv-Σ-snd (λ p → μp-eqv-fr (λ p′ → ψ (p , p′))) ∘e Σ-assoc
-
---     ηp-compat-fr : {i : FrIdx} → i == i
---     ηp-compat-fr = idp
-
---     μp-compat-fr : ∀ {i} (c : FrCn i) (δ : (p : FrPl c) → FrCn (FrTy p))
---                    (p : FrPl c) (q : FrPl (δ p))
---                 → FrTy (–> (μp-eqv-fr δ) (p , q)) == FrTy q
---     μp-compat-fr (leaf i) δ p q = idp
---     μp-compat-fr (node c φ) ψ (p , q) r = μp-compat-fr (φ p) (λ p′ → ψ (p , p′)) q r
-
---     --[ So far, just γ-eqs. We need to add ρ-eqs and talk about τ-eqs
---     unit-l-fr : ∀ {i} (c : FrCn i)
---              → μ-fr c (λ p → η-fr (FrTy p)) == c
---     unit-l-fr {i} c = {!!}
---       where
---         w : W P i
---         w = frcn→w c
-
---         the-law : ⊚-unit-l (FrP P) ▶ (fr-η P ∥ poly-id (FrP P)) ▶ fr-μ P ≈ poly-id (FrP P)
---         the-law = fr-η-left-law P
-
---         derivᵣ : γ-map (poly-id (FrP P)) {j = i} w == w
---         derivᵣ = idp
-
---         derivₗ : γ-map (⊚-unit-l (FrP P) ▶ (fr-η P ∥ poly-id (FrP P)) ▶ fr-μ P) {j = i} w ==
---                  frcn→w (μ-fr c (λ p → η-fr (FrTy p)))
---         derivₗ =
---           γ-map (⊚-unit-l (FrP P) ▶ (fr-η P ∥ poly-id (FrP P)) ▶ fr-μ P) {j = i} w
---             =⟨ idp ⟩
---           γ-map (fr-μ P) (frcn→w c , (λ q → leaf (leafType q)))
---             =⟨ {!γ-map (fr-μ P)!} ⟩
---           {!!}
---             =⟨ {!!} ⟩
---           frcn→w (μ-fr c (λ p → leaf (FrTy p)))
---             =⟨ idp ⟩
---           frcn→w (μ-fr c (λ p → η-fr (FrTy p))) ∎
-
--- --    unit-l-fr (leaf i) = idp
--- --    unit-l-fr (node c δ) = ap (λ x → node c x) (λ= (λ x → unit-l-fr (δ x)))
-
---     unit-r-fr : ∀ {i} (δ : (p : ⊤) → FrCn i)
---              → δ (–> (ηp-eqv-fr {i}) unit) == δ unit
---     unit-r-fr {i} δ = idp
-
---     assoc-fr : ∀ {i} (c : FrCn i) (δ : (p : FrPl c) → FrCn (FrTy p))
---                (ε : (q : FrPl (μ-fr c δ)) → FrCn (FrTy q))
---             → μ-fr c (λ p →
---                        μ-fr (δ p) (λ q →
---                                    transport FrCn (μp-compat-fr c δ p q) (ε (–> (μp-eqv-fr δ) (p , q)))))
---                == μ-fr (μ-fr c δ) ε
---     assoc-fr (leaf i) δ ε = idp
---     assoc-fr (node c δ) φ ψ = ap (λ x → node c x) (λ= (λ x → assoc-fr (δ x) (λ p → φ (x , p)) (λ q → ψ (x , q))))
---     --]
-
---     Fr : Monad
---     Monad.Idx Fr = FrIdx
---     Monad.P Fr = FrP P
---     Monad.η Fr = frcn→w ∘ η-fr
---     Monad.μ Fr = {!!}
---     Monad.ηp-eqv Fr {i} = {!!}
---     Monad.μp-eqv Fr = {!!}
---     Monad.ηp-compat Fr = {!!}
---     Monad.μp-compat Fr {c = c} {δ = δ} = {!!}
---     Monad.unit-l Fr = {!!}
---     Monad.unit-r Fr = {!!}
---     Monad.assoc Fr = {!!}
