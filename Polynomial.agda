@@ -89,22 +89,22 @@ module _ {ℓ} {I : Type ℓ} (P : Poly I I) where
           → τ P p == τ P p′
   τ-inv {i=i′ = idp} idp idp  = idp
 
-  ↓-≺-in : ∀ {κ} {X : I → Type κ} {i i′ : I} {i=i′ : i == i′}
-            {c : γ P i} {c′ : γ P i′}          {c=c′ : c == c′ [ γ P ↓ i=i′ ]}
+  ↓-≺-in : {X : I → Type ℓ} {i i′ : I} {i=i′ : i == i′}
+            {c : γ P i} {c′ : γ P i′} {c=c′ : c == c′ [ γ P ↓ i=i′ ]}
             {φ : ⟦ P ⟧⟦ c ≺ X ⟧}{φ′ : ⟦ P ⟧⟦ c′ ≺ X ⟧}
             → ({p : ρ P c} {p′ : ρ P c′} (p=p′ : p == p′ [ ρ-Σ P ↓ pair= i=i′ c=c′ ])
                → φ p == φ′ p′ [ X ↓ τ-inv c=c′ p=p′ ])
             → φ == φ′ [ ⟦ P ⟧≺ X ↓ pair= i=i′ c=c′ ]
   ↓-≺-in {i=i′ = idp} {c=c′ = idp} f = λ= (λ p → f idp)
 
-  ↓-≺-out : ∀ {κ} {X : I → Type κ} {i i′ : I}         {i=i′ : i == i′}
-            {c : γ P i} {c′ : γ P i′}                   {c=c′ : c == c′ [ γ P ↓ i=i′ ]}
+  ↓-≺-out : {X : I → Type ℓ} {i i′ : I} {i=i′ : i == i′}
+            {c : γ P i} {c′ : γ P i′} {c=c′ : c == c′ [ γ P ↓ i=i′ ]}
             {φ : ⟦ P ⟧⟦ c ≺ X ⟧} {φ′ : ⟦ P ⟧⟦ c′ ≺ X ⟧} (φ=φ′ : φ == φ′ [ ⟦ P ⟧≺ X ↓ pair= i=i′ c=c′ ])
             → ({p : ρ P c} {p′ : ρ P c′} (p=p′ : p == p′ [ ρ-Σ P ↓ pair= i=i′ c=c′ ])
                 → φ p == φ′ p′ [ X ↓ τ-inv c=c′ p=p′ ])
   ↓-≺-out {i=i′ = idp} {c=c′ = idp} q idp = app= q _
 
-  ↓-≺-β : ∀ {κ} {X : I → Type κ} {i i′ : I} {i=i′ : i == i′}
+  ↓-≺-β : {X : I → Type ℓ} {i i′ : I} {i=i′ : i == i′}
            {c : γ P i} {c′ : γ P i′} {c=c′ : c == c′ [ γ P ↓ i=i′ ]}
            {φ : ⟦ P ⟧⟦ c ≺ X ⟧}{φ′ : ⟦ P ⟧⟦ c′ ≺ X ⟧}
            → (f : {p : ρ P c} {p′ : ρ P c′} (p=p′ : p == p′ [ ρ-Σ P ↓ pair= i=i′ c=c′ ])
@@ -113,8 +113,8 @@ module _ {ℓ} {I : Type ℓ} (P : Poly I I) where
            → ↓-≺-out (↓-≺-in f) p=p′ == f p=p′
   ↓-≺-β {i=i′ = idp} {c=c′ = idp} f idp = app=-β (λ p → f idp) _
 
-  ↓-≺-η : ∀ {κ} {X : I → Type κ} {i i′ : I} {i=i′ : i == i′}
-          {c : γ P i} {c′ : γ P i′}                   {c=c′ : c == c′ [ γ P ↓ i=i′ ]}
+  ↓-≺-η : {X : I → Type ℓ} {i i′ : I} {i=i′ : i == i′}
+          {c : γ P i} {c′ : γ P i′} {c=c′ : c == c′ [ γ P ↓ i=i′ ]}
           {φ : ⟦ P ⟧⟦ c ≺ X ⟧} {φ′ : ⟦ P ⟧⟦ c′ ≺ X ⟧} (φ=φ′ : φ == φ′ [ ⟦ P ⟧≺ X ↓ pair= i=i′ c=c′ ])
           → ↓-≺-in (↓-≺-out {X = X} {i=i′ = i=i′} φ=φ′) == φ=φ′
   ↓-≺-η {i=i′ = idp} {c=c′ = idp} q = ! (λ=-η q)

@@ -44,9 +44,9 @@ module PolynomialMonad where
     η-plc-contr i = equiv-preserves-level (⟪ η ⟫≃ ∘e (lower-equiv)⁻¹ ) Unit-is-contr
 
     η-dec-eqv : (i : I) (X : I → Type ℓ) → X i ≃ ⟦ P ⟧⟦ ⟪ η ⟫ lt ≺ X ⟧
-    η-dec-eqv i X = ⟪ η ∣ X ⟫⇕-eqv ∘e lemma
+    η-dec-eqv i X = ⟪ η ∣ X ⟫⇕-eqv ∘e lemma where
+      lemma : {i : I} → X i ≃ ((p : ρ (IdP I) {i} lt) → X (τ (IdP I) {i} {lt} p))
+      lemma {i} = equiv (λ x → cst x) (λ f → f lt) (λ f → λ= (λ x → idp)) (λ x → idp)
 
-      where lemma : {i : I} → X i ≃ ((p : ρ (IdP I) {i} lt) → X (τ (IdP I) {i} {lt} p))
-            lemma {i} = equiv (λ x → cst x) (λ f → f lt) (λ f → λ= (λ x → idp)) (λ x → idp)
-
-
+    --η-τ= : ∀ {i} (p : ρ P (η-cns i)) → τ P p == i
+    --η-τ= {i} p = ADMIT

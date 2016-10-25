@@ -1,4 +1,5 @@
 {-# OPTIONS --without-K #-}
+--{-# OPTIONS --show-implicit #-}
 
 open import HoTT
 
@@ -31,7 +32,7 @@ module Simple where
       μ : {i : Idx} → (c : γ P i) → (δ : (p : ρ P c) → γ P (τ P p)) → γ P i
 
       -- equivalences of places (η, μ are Cartesian)
-      ηp-eqv : {i : Idx} → ⊤ ≃ ρ P (η i) -- why not ⊥?
+      ηp-eqv : {i : Idx} → ⊤ ≃ ρ P (η i)
       μp-eqv : {i : Idx} {c : γ P i} (δ : (p : ρ P c) → γ P (τ P p))
             → Σ (ρ P c) ((ρ P) ∘ δ) ≃ ρ P (μ c δ)
 
@@ -93,7 +94,7 @@ module Simple where
 
     thm-μp-eqv : {i : thm-idx} {c : γ P i} (δ : (p : ρ P c) → γ P (τ P p)) →
                  Σ (ρ P c) ((ρ P) ∘ δ) ≃ ρ P (thm-μ c δ)
-    thm-μp-eqv {c = c} δ = ⟪ μ ⟫≃ {c = (c , δ)} 
+    thm-μp-eqv {c = c} δ = ⟪ μ ⟫≃ {c = (c , δ)}
 
     thm-ηp-compat : {i : thm-idx} → τ P (–> thm-ηp-eqv unit) == i
     thm-ηp-compat = ! (⟪ η ⟫↓= lt)
@@ -102,28 +103,70 @@ module Simple where
                     (p : ρ P c) (q : ρ P (δ p)) → τ P (–> (thm-μp-eqv δ) (p , q)) == τ P q
     thm-μp-compat p q = ! (⟪ μ ⟫↓= (p , q))
 
-
     thm-unit-l : {i : thm-idx} (c : γ P i) → thm-μ c (λ p → thm-η (τ P p)) == c
-    thm-unit-l = γ≈ ∘ η-left-law 
-    
-    thm-unit-r : {i : thm-idx} (δ : (p : ρ P (thm-η i)) → γ P (τ P p)) →
+    thm-unit-l = γ≈ ∘ η-left-law
+
+    thm-unit-r : {i : thm-idx} (δ : ⟦ P ⟧⟦ ⟪ η ⟫ lt ≺ γ P ⟧) →
                  δ (–> thm-ηp-eqv unit) == ⟪ μ ⟫ (⟪ η ⟫ lt , δ) [ γ P ↓ thm-ηp-compat ]
-    thm-unit-r {i} δ = {!!}
+    thm-unit-r {i} δ = thm
+      where
+        c : γ P (τ P (–> thm-ηp-eqv unit))
+        c = δ (–> thm-ηp-eqv unit)
 
-      where c : γ P (τ P (–> thm-ηp-eqv unit))
-            c = δ (–> thm-ηp-eqv unit) 
+        const-dec : ⟦ P ⟧⟦ ⟪ η ⟫ lt ≺ γ P ⟧
+        const-dec = ⟪ poly-id P ∣ η ⟫⇕ (cst c)
 
-            δ' : ⟦ P ⟧⟦ ⟪ η ⟫ lt ≺ γ P ⟧
-            δ' = δ
+        hyp : c == ⟪ μ ⟫ (⟪ η ⟫ lt , const-dec)
+        hyp = ! ((γ≈ ∘ η-right-law) c)
 
-            const-dec : ⟦ P ⟧⟦ ⟪ η ⟫ lt ≺ γ P ⟧
-            const-dec = ⟪ poly-id P ∣ η ⟫⇕ (cst c)
+        ρ-con : ∀ {i j} (p : i == j) (c : γ P i) (d : γ P j)
+             → (e : c == d [ γ P ↓ p ]) → ρ P c ≃ ρ P d
+        ρ-con idp c .c idp = ide (ρ P c)
 
-            hyp : ⟪ μ ⟫ (⟪ η ⟫ lt , const-dec) == c
-            hyp = (γ≈ ∘ η-right-law) c
+        eq-pl : ∀ {i} → ρ P {i} (thm-η i) ≃ ρ P {τ P (–> (thm-ηp-eqv {i}) unit)} (⟪ η ⟫ lt)
+        eq-pl = ⟦ P ↓ apd thm-η (⟪ η ⟫↓= lt) ⟧≃
 
-            lemma : (p : ρ P (thm-η i)) → δ p == const-dec {!p!} [ γ P ↓ {!!} ]
-            lemma = {!!}
+        eq-ty : ∀ {i} (p : ρ P {i} (thm-η i))
+            → τ P p == τ P (–> eq-pl p)
+        eq-ty = ⟦ P ↓ apd thm-η (⟪ η ⟫↓= lt) ⟧↓=
+
+        δ=const : (p : ρ P (thm-η i)) → δ p == const-dec (–> eq-pl p) [ γ P ↓ eq-ty p ]
+        δ=const p = from-transp (γ P) (eq-ty p) lemma where
+          lemma : transport (γ P) (eq-ty p) (δ p) == const-dec (–> eq-pl p)
+          lemma =
+            transport (γ P) (eq-ty p) (δ p) =⟨ idp ⟩
+            coe (ap (γ P) (⟦ P ↓ apd (λ _ → ⟪ η ⟫ lt) (⟪ η ⟫↓= lt) ⟧↓= p)) (δ p) =⟨ {!!} ⟩
+            {!const-dec (–> eq-pl p) !} =⟨ {!!} ⟩
+            const-dec (–> eq-pl p) ∎
+        --δ=const p = ↓-≺-out P
+        --                    {X = γ P}
+        --                    {i = i}
+        --                    {i′ = {!–> eq-pl p!}}
+        --                    {i=i′ = {!!}}
+        --                    {c = {!!}}
+        --                    {c′ = {!!}}
+        --                    {φ = {!!}}
+        --                    {φ′ = {!!}}
+        --                    {!!} -- φ=φ′
+        --                    {p = {!!}}
+        --                    {p′ = {!!}}
+        --                    {!!} where
+
+        --  lem1 : i == τ P (–> thm-ηp-eqv unit)
+        --  lem1 = ! {!thm-ηp-compat {i}!} --?
+
+        --  lem2 : thm-η i == ⟪ η ⟫ lt [ γ P ↓ lem1 ]
+        --  lem2 = {!idp!}
+
+        --  lem3 : δ == const-dec [ ⟦ P ⟧≺ (γ P) ↓ pair= lem1 lem2 ]
+        --  lem3 = {!!}
+
+        --  lem4 : p == –> eq-pl p [ ρ-Σ P ↓ pair= lem1 lem3 ]
+        --  lem4 = {!!}
+
+        thm : δ (–> thm-ηp-eqv unit) == ⟪ μ ⟫ (⟪ η ⟫ lt , δ) [ γ P ↓ thm-ηp-compat ]
+        thm = {!!}
+
 
     theorem : Monad
     Monad.Idx theorem = thm-idx
@@ -134,6 +177,6 @@ module Simple where
     Monad.μp-eqv theorem = thm-μp-eqv
     Monad.ηp-compat theorem = thm-ηp-compat
     Monad.μp-compat theorem = thm-μp-compat
-    Monad.unit-l theorem = {!!}
+    Monad.unit-l theorem = thm-unit-l
     Monad.unit-r theorem = thm-unit-r
     Monad.assoc theorem = {!!}

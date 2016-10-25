@@ -85,55 +85,59 @@ module FreeMonad where
     fr-μ-assoc-law : ⊚-assoc-r FrP FrP FrP ▶ (poly-id FrP ∥ fr-μ) ▶ fr-μ ≈ (fr-μ ∥ poly-id FrP) ▶ fr-μ
     fr-μ-assoc-law (leaf i , ψ) = lcl-eqv idp (λ p → idp) ADMIT
     fr-μ-assoc-law (node (c , φ) , ψ) = lcl-eqv γ-eq ρ-eq ADMIT
-      where γ-eq : ⟪ ⊚-assoc-r FrP FrP FrP ▶ (poly-id FrP ∥ fr-μ) ▶ fr-μ ⟫ (node (c , φ) , ψ) ==
-                   ⟪ (fr-μ ∥ poly-id FrP) ▶ fr-μ ⟫ (node (c , φ) , ψ)
-            --γ-eq = γ≈ (unroll ((c , φ) , ψ)) ∙ ↓-W-node-lcl-in (λ p → γ≈ (fr-μ-assoc-law (φ p , λ p₁ → ψ (p , p₁))))
-            γ-eq =
-              ⟪ ⊚-assoc-r FrP FrP FrP ▶ (poly-id FrP ∥ fr-μ) ▶ fr-μ ⟫ (node (c , φ) , ψ)
-                =⟨ idp ⟩
-              ⟪ (poly-id FrP ∥ fr-μ) ▶ fr-μ ⟫ (⟪ ⊚-assoc-r FrP FrP FrP ⟫ (node (c , φ) , ψ))
-                =⟨ idp ⟩
-              ⟪ (poly-id FrP ∥ fr-μ) ▶ fr-μ ⟫ ((node (c , φ) , (λ x → fst (ψ x))) , (λ w → snd (ψ (fst w)) (snd w)))
-                =⟨ idp ⟩
-              ⟪ fr-μ ⟫ ( ⟪ poly-id FrP ∥ fr-μ ⟫ ((node (c , φ) , (λ x → fst (ψ x))) , (λ w → snd (ψ (fst w)) (snd w))))
---                =⟨ idp ⟩
---              node (c ,
---                (λ p₀ →
---                  γ-map (fr-fix fr-P)
---                    ((γ-map fr-μ (φ p₀ , (λ p₁ → fst (ψ (p₀ , p₁))))) ,
---                     (λ p₁ → coe
---                       (ap (W P)
---                         ((τ-coh fr-μ (<– (ρ-eqv fr-μ) p₁)) ∙
---                           ap (leafType ∘ snd)
---                             (! (ap (λ x → fst x , –> (ρ-eqv fr-μ) (<– (ρ-eqv fr-μ) (snd x)))
---                               (ap (_,_ p₀) (<–-inv-r (ρ-eqv fr-μ) p₁))) ∙
---                             ap (λ ab → fst ab , –> (ρ-eqv fr-μ) (snd ab))
---                               (ap (_,_ p₀) (<–-inv-r (ρ-eqv fr-μ) (<– (ρ-eqv fr-μ) p₁))) ∙
---                             ap (_,_ p₀)
---                               (<–-inv-r (ρ-eqv fr-μ) p₁))))
---                       (snd (ψ (p₀ , fst (<– (ρ-eqv fr-μ) p₁))) (snd (<– (ρ-eqv fr-μ) p₁)))))))
-                =⟨ ADMIT ⟩
-              node (c , (λ p → γ-map (fr-fix fr-P) (φ p , (λ p′ → γ-map (fr-fix fr-P) (ψ (p , p′))))))
-                =⟨ idp ⟩
-              ⟪ (fr-μ ∥ poly-id FrP) ▶ fr-μ ⟫ (node (c , φ) , ψ) ∎
-                where
-                  flant : (p : ρ P c) → γ-map fr-μ (φ p , λ p′ → fst (ψ (p , p′))) == φ p
-                  flant p = ADMIT
+      where
+        dec : ⟦ P ⟧⟦ c ≺ γ FrP ⟧
+        dec p = ⟪ ⊚-assoc-r FrP FrP FrP ▶ (poly-id FrP ∥ fr-μ) ▶ fr-μ ⟫ (φ p , λ p′ → ψ (p , p′))
 
-            dec : ⟦ P ⟧⟦ c ≺ γ FrP ⟧
-            dec p = ⟪ ⊚-assoc-r FrP FrP FrP ▶ (poly-id FrP ∥ fr-μ) ▶ fr-μ ⟫ (φ p , λ p′ → ψ (p , p′))
+        dec′ : ⟦ P ⟧⟦ c ≺ γ FrP ⟧
+        dec′ p = ⟪ (fr-μ ∥ poly-id FrP) ▶ fr-μ ⟫ (φ p , λ p′ → ψ (p , p′))
 
-            dec′ : ⟦ P ⟧⟦ c ≺ γ FrP ⟧
-            dec′ p = ⟪ (fr-μ ∥ poly-id FrP) ▶ fr-μ ⟫ (φ p , λ p′ → ψ (p , p′))
+        IH : (p : ρ P c) → dec p == dec′ p
+        IH p = γ≈ (fr-μ-assoc-law (φ p , λ p′ → ψ (p , p′)))
 
-            IH : (p : ρ P c) → dec p == dec′ p
-            IH p = γ≈ (fr-μ-assoc-law (φ p , λ p′ → ψ (p , p′)))
+        γ-eq : ⟪ ⊚-assoc-r FrP FrP FrP ▶ (poly-id FrP ∥ fr-μ) ▶ fr-μ ⟫ (node (c , φ) , ψ) ==
+               ⟪ (fr-μ ∥ poly-id FrP) ▶ fr-μ ⟫ (node (c , φ) , ψ)
+        --γ-eq = γ≈ (unroll ((c , φ) , ψ)) ∙ ↓-W-node-lcl-in (λ p → γ≈ (fr-μ-assoc-law (φ p , λ p₁ → ψ (p , p₁))))
+        γ-eq =
+          ⟪ ⊚-assoc-r FrP FrP FrP ▶ (poly-id FrP ∥ fr-μ) ▶ fr-μ ⟫ (node (c , φ) , ψ)
+            =⟨ idp ⟩
+          ⟪ (poly-id FrP ∥ fr-μ) ▶ fr-μ ⟫ (⟪ ⊚-assoc-r FrP FrP FrP ⟫ (node (c , φ) , ψ))
+            =⟨ idp ⟩
+          ⟪ (poly-id FrP ∥ fr-μ) ▶ fr-μ ⟫ ((node (c , φ) , (λ x → fst (ψ x))) , (λ w → snd (ψ (fst w)) (snd w)))
+            =⟨ idp ⟩
+          ⟪ fr-μ ⟫ (⟪ poly-id FrP ∥ fr-μ ⟫ ((node (c , φ) , (λ x → fst (ψ x))) , (λ w → snd (ψ (fst w)) (snd w))))
+            =⟨ idp ⟩
+          ⟪ fr-μ ⟫ (⟪ fr-μ ⟫ (node (c , φ) , (λ x → fst (ψ x))) , ⟪ poly-id FrP ∣ fr-μ ⟫⇕ (λ w → snd (ψ (fst w)) (snd w)))
+            =⟨ idp ⟩
+          ⟪ fr-μ ⟫ (node (c , (λ p → ⟪ fr-μ ⟫ (φ p , (λ p′ → fst (ψ (p , p′))))))
+                   , ⟪ poly-id FrP ∣ fr-μ ⟫⇕ (λ w → snd (ψ (fst w)) (snd w)))
+            =⟨ idp ⟩
+          node (c , (λ p → ⟪ fr-μ ⟫ (⟪ fr-μ ⟫ (φ p , (λ p′ → fst (ψ (p , p′))))
+                                              , (λ p′ → ⟪ poly-id FrP ∣ fr-μ ⟫⇕ (λ w → snd (ψ (fst w)) (snd w)) (p , p′)))))
+            =⟨ λ= lemma1 |in-ctx (λ x → node (c , x)) ⟩
+          node (c , (λ p → ⟪ fr-μ ⟫ (φ p , (λ p′ → γ-map fr-μ (ψ (p , p′))))))
+            =⟨ idp ⟩
+          ⟪ (fr-μ ∥ poly-id FrP) ▶ fr-μ ⟫ (node (c , φ) , ψ) ∎
+            where
+              lemma2 : (p : ρ P c)
+                    → ⟪ fr-μ ⟫ (φ p , (λ p′ → fst (ψ (p , p′))))
+                         , (λ p′ → ⟪ poly-id FrP ∣ fr-μ ⟫⇕ (λ w → snd (ψ (fst w)) (snd w)) (p , p′))
+                       == φ p , (λ p′ → γ-map fr-μ (ψ (p , p′)))
+              lemma2 p = pair= (γ≈ (fr-μ-assoc-law ({!!} , (λ x → {!!} , (λ x₁ → {!!}))))) {!!}
 
-            ρ-eq : (p : Σ (Σ (ρ P c) (λ q → leafOf (φ q))) ((λ w → Σ (leafOf (fst w)) (leafOf ∘ snd w)) ∘ ψ))
-                → ⟪ ⊚-assoc-r FrP FrP FrP ▶ (poly-id FrP ∥ fr-μ) ▶ fr-μ ⟫↓ p ==
-                   ⟪ (fr-μ ∥ poly-id FrP) ▶ fr-μ ⟫↓ p
-                   [ leafOf ↓ γ-eq ]
-            ρ-eq p = ADMIT
+              lemma1 : (p : ρ P c)
+                    → ⟪ fr-μ ⟫ (⟪ fr-μ ⟫ (φ p , (λ p′ → fst (ψ (p , p′))))
+                                  , (λ p′ → ⟪ poly-id FrP ∣ fr-μ ⟫⇕ (λ w → snd (ψ (fst w)) (snd w)) (p , p′)))
+                       == ⟪ fr-μ ⟫ (φ p , (λ p′ → γ-map fr-μ (ψ (p , p′))))
+              lemma1 p = ap ⟪ fr-μ ⟫ (lemma2 p)
+
+--γ-map (fr-fix α) (node (c , φ) , ψ) = ⟪ α ⟫ (c , (λ p₀ → γ-map (fr-fix α) (φ p₀ , (λ p₁ → ψ (p₀ , p₁)))))
+
+        ρ-eq : (p : Σ (Σ (ρ P c) (λ q → leafOf (φ q))) ((λ w → Σ (leafOf (fst w)) (leafOf ∘ snd w)) ∘ ψ))
+            → ⟪ ⊚-assoc-r FrP FrP FrP ▶ (poly-id FrP ∥ fr-μ) ▶ fr-μ ⟫↓ p ==
+               ⟪ (fr-μ ∥ poly-id FrP) ▶ fr-μ ⟫↓ p
+               [ leafOf ↓ γ-eq ]
+        ρ-eq p = ADMIT
 
 
     FrM : PolyMonad I
