@@ -1,5 +1,5 @@
 {-# OPTIONS --without-K #-}
---{-# OPTIONS --show-implicit #-}
+-- {-# OPTIONS --show-implicit #-}
 
 open import HoTT
 
@@ -107,66 +107,38 @@ module Simple where
     thm-unit-l = γ≈ ∘ η-left-law
 
     thm-unit-r : {i : thm-idx} (δ : ⟦ P ⟧⟦ ⟪ η ⟫ lt ≺ γ P ⟧) →
-                 δ (–> thm-ηp-eqv unit) == ⟪ μ ⟫ (⟪ η ⟫ lt , δ) [ γ P ↓ thm-ηp-compat ]
+                 δ (⟪ η ⟫↓ lt) == ⟪ μ ⟫ (⟪ η ⟫ lt , δ) [ γ P ↓ thm-ηp-compat ]
     thm-unit-r {i} δ = thm
       where
-        c : γ P (τ P (–> thm-ηp-eqv unit))
-        c = δ (–> thm-ηp-eqv unit)
 
-        const-dec : ⟦ P ⟧⟦ ⟪ η ⟫ lt ≺ γ P ⟧
+        i' : I
+        i' = (τ P (⟪ η ⟫↓ lt))
+
+        i=i' : i == i'
+        i=i' = ⟪ η ⟫↓= lt
+        
+        c : γ P i'
+        c = δ (⟪ η ⟫↓ lt)
+        
+        unit-law : ⟪ μ ⟫ (⟪ η ⟫ lt , ⟪ poly-id P ∣ η ⟫⇕ (cst c)) == c
+        unit-law = (γ≈ ∘ η-right-law) c
+
+        const-dec : ⟦ P ⟧⟦ ⟪ η ⟫ {j = i'} lt ≺ γ P ⟧
         const-dec = ⟪ poly-id P ∣ η ⟫⇕ (cst c)
 
-        hyp : c == ⟪ μ ⟫ (⟪ η ⟫ lt , const-dec)
-        hyp = ! ((γ≈ ∘ η-right-law) c)
+        -- const-dec-coh : δ (⟪ η ⟫↓ {j = i} lt) == (const-dec (⟪ η ⟫↓ {j = i'} lt)) [ γ P ↓ ⟪ η ⟫↓= lt ]
+        -- const-dec-coh = ⟪ poly-id P ∣ η ⟫⇕-coh (cst c) lt
 
-        ρ-con : ∀ {i j} (p : i == j) (c : γ P i) (d : γ P j)
-             → (e : c == d [ γ P ↓ p ]) → ρ P c ≃ ρ P d
-        ρ-con idp c .c idp = ide (ρ P c)
+        a-goal : δ == const-dec [ ⟦ P ⟧≺ (γ P) ↓ pair= i=i' (apd (λ x → ⟪ η ⟫ {j = x} lt) i=i') ]
+        a-goal = {!!}
+        
+        next-goal : ⟪ μ ⟫ (⟪ η ⟫ lt , δ) == ⟪ μ ⟫ (⟪ η ⟫ lt , const-dec) [ γ P ↓ ⟪ η ⟫↓= lt ]
+        next-goal = μ-inv M {i₀ = i} {i₁ = i'} (⟪ η ⟫ lt) (⟪ η ⟫ lt) δ const-dec i=i'
+                          (apd (λ x → ⟪ η ⟫ {j = x} lt) i=i')
+                          a-goal
 
-        eq-pl : ∀ {i} → ρ P {i} (thm-η i) ≃ ρ P {τ P (–> (thm-ηp-eqv {i}) unit)} (⟪ η ⟫ lt)
-        eq-pl = ⟦ P ↓ apd thm-η (⟪ η ⟫↓= lt) ⟧≃
-
-        eq-ty : ∀ {i} (p : ρ P {i} (thm-η i))
-            → τ P p == τ P (–> eq-pl p)
-        eq-ty = ⟦ P ↓ apd thm-η (⟪ η ⟫↓= lt) ⟧↓=
-
-        δ=const : (p : ρ P (thm-η i)) → δ p == const-dec (–> eq-pl p) [ γ P ↓ eq-ty p ]
-        δ=const p = from-transp (γ P) (eq-ty p) lemma where
-          lemma : transport (γ P) (eq-ty p) (δ p) == const-dec (–> eq-pl p)
-          lemma =
-            transport (γ P) (eq-ty p) (δ p) =⟨ idp ⟩
-            coe (ap (γ P) (⟦ P ↓ apd (λ _ → ⟪ η ⟫ lt) (⟪ η ⟫↓= lt) ⟧↓= p)) (δ p) =⟨ {!!} ⟩
-            {!const-dec (–> eq-pl p) !} =⟨ {!!} ⟩
-            const-dec (–> eq-pl p) ∎
-        --δ=const p = ↓-≺-out P
-        --                    {X = γ P}
-        --                    {i = i}
-        --                    {i′ = {!–> eq-pl p!}}
-        --                    {i=i′ = {!!}}
-        --                    {c = {!!}}
-        --                    {c′ = {!!}}
-        --                    {φ = {!!}}
-        --                    {φ′ = {!!}}
-        --                    {!!} -- φ=φ′
-        --                    {p = {!!}}
-        --                    {p′ = {!!}}
-        --                    {!!} where
-
-        --  lem1 : i == τ P (–> thm-ηp-eqv unit)
-        --  lem1 = ! {!thm-ηp-compat {i}!} --?
-
-        --  lem2 : thm-η i == ⟪ η ⟫ lt [ γ P ↓ lem1 ]
-        --  lem2 = {!idp!}
-
-        --  lem3 : δ == const-dec [ ⟦ P ⟧≺ (γ P) ↓ pair= lem1 lem2 ]
-        --  lem3 = {!!}
-
-        --  lem4 : p == –> eq-pl p [ ρ-Σ P ↓ pair= lem1 lem3 ]
-        --  lem4 = {!!}
-
-        thm : δ (–> thm-ηp-eqv unit) == ⟪ μ ⟫ (⟪ η ⟫ lt , δ) [ γ P ↓ thm-ηp-compat ]
-        thm = {!!}
-
+        thm : δ (⟪ η ⟫↓ lt) == ⟪ μ ⟫ (⟪ η ⟫ lt , δ) [ γ P ↓ thm-ηp-compat ]
+        thm = !ᵈ (next-goal ∙'ᵈ unit-law)
 
     theorem : Monad
     Monad.Idx theorem = thm-idx

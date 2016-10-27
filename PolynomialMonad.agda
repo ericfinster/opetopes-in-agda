@@ -48,5 +48,24 @@ module PolynomialMonad where
       lemma : {i : I} → X i ≃ ((p : ρ (IdP I) {i} lt) → X (τ (IdP I) {i} {lt} p))
       lemma {i} = equiv (λ x → cst x) (λ f → f lt) (λ f → λ= (λ x → idp)) (λ x → idp)
 
-    --η-τ= : ∀ {i} (p : ρ P (η-cns i)) → τ P p == i
-    --η-τ= {i} p = ADMIT
+    η-τ= : ∀ {i} (p : ρ P (η-cns i)) → τ P p == i
+    η-τ= {i} p = lemma₁ ∙ lemma₂
+
+      where lemma : p == ⟪ η ⟫↓ lt
+            lemma = contr-has-all-paths (η-plc-contr i) p (⟪ η ⟫↓ lt)
+
+            lemma₁ : τ P p == τ P (⟪ η ⟫↓ lt)
+            lemma₁ = ap (τ P) lemma
+            
+            lemma₂ : τ P (⟪ η ⟫↓ lt) == i
+            lemma₂ = ! (⟪ η ⟫↓= lt)
+
+    -- This can probably be done with things in the library.
+    -- It's probably worth figuring out how to understand the
+    -- library better.
+    μ-inv : {i₀ i₁ : I} (c₀ : γ P i₀) (c₁ : γ P i₁)
+            (δ₀ : ⟦ P ⟧⟦ c₀ ≺ γ P ⟧) (δ₁ : ⟦ P ⟧⟦ c₁ ≺ γ P ⟧)
+            (p : i₀ == i₁) (q : c₀ == c₁ [ γ P ↓ p ])
+            (r : δ₀ == δ₁ [ ⟦ P ⟧≺ (γ P) ↓ pair= p q ]) → 
+            ⟪ μ ⟫ (c₀ , δ₀) == ⟪ μ ⟫ (c₁ , δ₁) [ γ P ↓ p ]
+    μ-inv c₁ .c₁ δ₀ .δ₀ idp idp idp = idp
