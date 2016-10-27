@@ -120,18 +120,20 @@ module Simple where
         c : γ P i'
         c = δ (⟪ η ⟫↓ lt)
         
-        unit-law : ⟪ μ ⟫ (⟪ η ⟫ lt , ⟪ poly-id P ∣ η ⟫⇕ (cst c)) == c
-        unit-law = (γ≈ ∘ η-right-law) c
-
         const-dec : ⟦ P ⟧⟦ ⟪ η ⟫ {j = i'} lt ≺ γ P ⟧
         const-dec = ⟪ poly-id P ∣ η ⟫⇕ (cst c)
 
-        -- const-dec-coh : δ (⟪ η ⟫↓ {j = i} lt) == (const-dec (⟪ η ⟫↓ {j = i'} lt)) [ γ P ↓ ⟪ η ⟫↓= lt ]
-        -- const-dec-coh = ⟪ poly-id P ∣ η ⟫⇕-coh (cst c) lt
+        unit-law : ⟪ μ ⟫ (⟪ η ⟫ lt , const-dec) == c
+        unit-law = (γ≈ ∘ η-right-law) c
+
+        const-dec-coh : δ (⟪ η ⟫↓ {j = i} lt) == (const-dec (⟪ η ⟫↓ {j = i'} lt)) [ γ P ↓ ⟪ η ⟫↓= lt ]
+        const-dec-coh = ⟪ poly-id P ∣ η ⟫⇕-coh (cst c) lt
 
         a-goal : δ == const-dec [ ⟦ P ⟧≺ (γ P) ↓ pair= i=i' (apd (λ x → ⟪ η ⟫ {j = x} lt) i=i') ]
-        a-goal = {!!}
-        
+        a-goal = η-dec-unique M i=i' δ const-dec {!!}
+          
+                   -- (q : δ₀ (⟪ η ⟫↓ lt) == δ₁ (⟪ η ⟫↓ lt) [ γ P ↓ ap (λ j → τ P (⟪ η ⟫↓ {j = j} lt)) p ])
+
         next-goal : ⟪ μ ⟫ (⟪ η ⟫ lt , δ) == ⟪ μ ⟫ (⟪ η ⟫ lt , const-dec) [ γ P ↓ ⟪ η ⟫↓= lt ]
         next-goal = μ-inv M {i₀ = i} {i₁ = i'} (⟪ η ⟫ lt) (⟪ η ⟫ lt) δ const-dec i=i'
                           (apd (λ x → ⟪ η ⟫ {j = x} lt) i=i')

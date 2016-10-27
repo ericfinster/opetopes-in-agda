@@ -69,3 +69,34 @@ module PolynomialMonad where
             (r : δ₀ == δ₁ [ ⟦ P ⟧≺ (γ P) ↓ pair= p q ]) → 
             ⟪ μ ⟫ (c₀ , δ₀) == ⟪ μ ⟫ (c₁ , δ₁) [ γ P ↓ p ]
     μ-inv c₁ .c₁ δ₀ .δ₀ idp idp idp = idp
+
+    po-inv : ∀ {ℓ} {X : Type ℓ} {P : X → Type ℓ}
+             {x₀ : X} {x₁ : X} (p : x₀ == x₁)
+             {a₀ : P x₀} {a₁ : P x₀}
+             (q : a₀ == a₁ [ P ↓ p ∙ (! p) ]) → a₀ == a₁
+    po-inv idp idp = idp             
+
+    η-dec-unique : {i₀ i₁ : I} (p : i₀ == i₁)
+                   (δ₀ : ⟦ P ⟧⟦ ⟪ η ⟫ {j = i₀} lt ≺ γ P ⟧) 
+                   (δ₁ : ⟦ P ⟧⟦ ⟪ η ⟫ {j = i₁} lt ≺ γ P ⟧) 
+                   (q : δ₀ (⟪ η ⟫↓ lt) == δ₁ (⟪ η ⟫↓ lt) [ γ P ↓ ap (λ j → τ P (⟪ η ⟫↓ {j = j} lt)) p ])
+                   → δ₀ == δ₁ [ ⟦ P ⟧≺ (γ P) ↓ pair= p (apd (λ x → ⟪ η ⟫ {j = x} lt) p) ]
+    η-dec-unique {i} {.i} idp δ₀ δ₁ q = λ= lemma
+
+      where lemma : (p : ρ P (⟪ η ⟫ {i} lt)) → δ₀ p == δ₁ p
+            lemma p = lem
+
+              where α : p == ⟪ η ⟫↓ lt
+                    α = contr-has-all-paths (η-plc-contr i) p (⟪ η ⟫↓ lt)
+
+                    δ₀-over : δ₀ p == δ₀ (⟪ η ⟫↓ lt) [ (γ P) ∘ (τ P) ↓ α ]
+                    δ₀-over = apd δ₀ α
+
+                    δ₁-over : δ₁ (⟪ η ⟫↓ lt) == δ₁ p [ (γ P) ∘ (τ P) ↓ (! α) ]
+                    δ₁-over = apd δ₁ (! α)
+
+                    total-po : δ₀ p == δ₁ p [ (γ P) ∘ (τ P) ↓ α ∙ (! α) ]
+                    total-po = δ₀-over ∙ᵈ q ∙ᵈ δ₁-over
+
+                    lem : δ₀ p == δ₁ p
+                    lem = po-inv α {δ₀ p} {δ₁ p} total-po
