@@ -2,16 +2,16 @@
 
 open import HoTT
 
-open import opetopes.Polynomial
-open import opetopes.CartesianMorphism
-open import opetopes.PolynomialMonad
-open import opetopes.PolyMisc
+open import Polynomial
+open import CartesianMorphism
+open import PolynomialMonad
+open import PolyMisc
 
-module opetopes.PullbackMonad where
+module PullbackMonad where
 
   module _ {ℓ} {I : Set ℓ} (X : I → Set ℓ) (M : PolyMonad I) where
-  
-    open PolyMonad 
+
+    open PolyMonad
 
     T : Set ℓ
     T = Σ I X
@@ -47,7 +47,7 @@ module opetopes.PullbackMonad where
     -- pb-μ-assoc-law : ⊚-assoc-r PbP PbP PbP ▶ (poly-id PbP ∥ pb-μ) ▶ pb-μ ≈ (pb-μ ∥ poly-id PbP) ▶ pb-μ
     -- pb-μ-assoc-law = ADMIT
 
-    -- PbM : PolyMonad T 
+    -- PbM : PolyMonad T
     -- P PbM = PbP
     -- η PbM = pb-η
     -- μ PbM = pb-μ
@@ -56,7 +56,5 @@ module opetopes.PullbackMonad where
     -- μ-assoc-law PbM = pb-μ-assoc-law
 
   -- -- Using the pullback, we can define maps of monads over a given fibration
-  -- PolyMapOver : ∀ {ℓ} {I : Type ℓ} (X : I → Type ℓ) (M : PolyMonad (Σ I X)) (N : PolyMonad I) → Type ℓ 
+  -- PolyMapOver : ∀ {ℓ} {I : Type ℓ} (X : I → Type ℓ) (M : PolyMonad (Σ I X)) (N : PolyMonad I) → Type ℓ
   -- PolyMapOver X M N = PolyMonadMap M (PbM X N)
-
-
