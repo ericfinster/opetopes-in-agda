@@ -84,7 +84,7 @@ module FreeMonad where
     {-# TERMINATING #-}
     fr-μ-assoc-law : ⊚-assoc-r FrP FrP FrP ▶ (poly-id FrP ∥ fr-μ) ▶ fr-μ ≈ (fr-μ ∥ poly-id FrP) ▶ fr-μ
     fr-μ-assoc-law (leaf i , ψ) = lcl-eqv idp (λ p → idp) ADMIT
-    fr-μ-assoc-law (node (c , φ) , ψ) = lcl-eqv ADMIT ADMIT ADMIT where
+    fr-μ-assoc-law (node (c , φ) , ψ) = lcl-eqv γ-eq ρ-eq ADMIT where
       dec : ⟦ P ⟧⟦ c ≺ γ FrP ⟧
       dec p = ⟪ ⊚-assoc-r FrP FrP FrP ▶ (poly-id FrP ∥ fr-μ) ▶ fr-μ ⟫ (φ p , λ p′ → ψ (p , p′))
 
@@ -97,7 +97,7 @@ module FreeMonad where
       γ-eq : ⟪ ⊚-assoc-r FrP FrP FrP ▶ (poly-id FrP ∥ fr-μ) ▶ fr-μ ⟫ (node (c , φ) , ψ) ==
              ⟪ (fr-μ ∥ poly-id FrP) ▶ fr-μ ⟫ (node (c , φ) , ψ)
       γ-eq =
-        ⟪ ⊚-assoc-r FrP FrP FrP ▶ (poly-id FrP ∥ fr-μ) ▶ fr-μ ⟫ (node (c , φ) , ψ)
+              ⟪ ⊚-assoc-r FrP FrP FrP ▶ (poly-id FrP ∥ fr-μ) ▶ fr-μ ⟫ (node (c , φ) , ψ)
           =⟨ λ= lemma |in-ctx (λ x → node (c , (λ p → ⟪ fr-μ ⟫ (⟪ fr-μ ⟫ (φ p , (λ p′ → fst (ψ (p , p′)))) , x p)))) ⟩
         node (c , (λ p → ⟪ fr-μ ⟫ (⟪ fr-μ ⟫ (φ p , (λ p′ → fst (ψ (p , p′))))
                                             , ⟪ poly-id FrP ∣ fr-μ ⟫⇕ (λ x → snd (ψ (p , fst x)) (snd x)))))

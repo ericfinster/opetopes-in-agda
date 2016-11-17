@@ -12,23 +12,22 @@ data W {ℓ} {I : Type ℓ} (P : Poly I I) : I → Type ℓ where
 
 module _ {ℓ} {I : Type ℓ} {P : Poly I I} where
   equiv-W : {i : I} → W P i ≃ (⊤ ⊔ ⟦ P ⟧ (W P) i)
-  equiv-W {i} = unroll-W , is-eq unroll-W roll-W unroll-roll roll-unroll
-    where
-      unroll-W : {i : I} → W P i → ⊤ ⊔ ⟦ P ⟧ (W P) i
-      unroll-W (leaf i) = inl unit
-      unroll-W (node (c , φ)) = inr (c , φ)
+  equiv-W {i} = unroll-W , is-eq unroll-W roll-W unroll-roll roll-unroll where
+    unroll-W : {i : I} → W P i → ⊤ ⊔ ⟦ P ⟧ (W P) i
+    unroll-W (leaf i) = inl unit
+    unroll-W (node (c , φ)) = inr (c , φ)
 
-      roll-W : {i : I} → ⊤ ⊔ ⟦ P ⟧ (W P) i → W P i
-      roll-W {i} (inl _) = leaf i
-      roll-W (inr (c , φ)) = node (c , φ)
+    roll-W : {i : I} → ⊤ ⊔ ⟦ P ⟧ (W P) i → W P i
+    roll-W {i} (inl _) = leaf i
+    roll-W (inr (c , φ)) = node (c , φ)
 
-      unroll-roll : ∀ {i} → (uw : ⊤ ⊔ ⟦ P ⟧ (W P) i) → unroll-W (roll-W uw) ==  uw
-      unroll-roll (inl x) = idp
-      unroll-roll (inr x) = idp
+    unroll-roll : ∀ {i} → (uw : ⊤ ⊔ ⟦ P ⟧ (W P) i) → unroll-W (roll-W uw) ==  uw
+    unroll-roll (inl x) = idp
+    unroll-roll (inr x) = idp
 
-      roll-unroll : ∀ {i} → (w : W P i) → roll-W (unroll-W w) == w
-      roll-unroll (leaf i) = idp
-      roll-unroll (node x) = idp
+    roll-unroll : ∀ {i} → (w : W P i) → roll-W (unroll-W w) == w
+    roll-unroll (leaf i) = idp
+    roll-unroll (node x) = idp
 
 
   {-# TERMINATING #-}
@@ -52,13 +51,13 @@ module _ {ℓ} {I : Type ℓ} {P : Poly I I} where
 
   -- ↓-W-leaf-η : {i i′ : I} {q : i == i′} → (l : leaf i == leaf i′ [ W P ↓ q ])
   --           → ↓-W-leaf-in {q = ↓-W-leaf-out l} == l
-  -- ↓-W-leaf-η {i} {.i} {q = idp} l = ! (ap (<– lf=lf-equiv) contr-in-⊤) ∙ (<–-inv-l lf=lf-equiv l)
+  -- ↓-W-leaf-η {i} {.i} {q = idp} l = ! (ap (<– lf=lf-equiv) contr-in-⊤) ∙ (<–-inv-l lf=lf-equiv l) where
   --   -- TODO: take lf=lf-equiv and nd=nd-eqv out of where blocks
-  --   where lf=lf-equiv : (leaf i == leaf i) ≃ (unit == unit)
-  --         lf=lf-equiv = inl=inl-equiv unit unit ∘e equiv-ap equiv-W (leaf i) (leaf i)
+  --   lf=lf-equiv : (leaf i == leaf i) ≃ (unit == unit)
+  --   lf=lf-equiv = inl=inl-equiv unit unit ∘e equiv-ap equiv-W (leaf i) (leaf i)
 
-  --         contr-in-⊤ : –> lf=lf-equiv l == idp
-  --         contr-in-⊤ = fst $ ⊤-is-set unit unit (–> lf=lf-equiv l) idp
+  --   contr-in-⊤ : –> lf=lf-equiv l == idp
+  --   contr-in-⊤ = fst $ ⊤-is-set unit unit (–> lf=lf-equiv l) idp
 
   ↓-W-node-in : {i i′ : I} {q : i == i′} {c : γ P i} {c′ : γ P i′}
                 {φ : ⟦ P ⟧⟦ c ≺ W P ⟧ } {φ′ : ⟦ P ⟧⟦ c′ ≺ W P ⟧ }
@@ -71,26 +70,26 @@ module _ {ℓ} {I : Type ℓ} {P : Poly I I} where
   --                {φ : ⟦ P ⟧⟦ c ≺ W P ⟧ } {φ′ : ⟦ P ⟧⟦ c′ ≺ W P ⟧ }
   --             → (node (c , φ) == node (c′ , φ′) [ W P ↓ q ])
   --             → c == c′ [ γ P ↓ q ]
-  -- ↓-W-node-con {i} {q = idp} {c} {c′} {φ} {φ′} n=n = fst= cφ=c′φ′
-  --     where nd=nd-eqv : (node (c , φ) == node (c′ , φ′)) ≃ ((c , φ) == (c′ , φ′))
-  --           nd=nd-eqv = inr=inr-equiv (c , φ) (c′ , φ′) ∘e equiv-ap equiv-W (node (c , φ)) (node (c′ , φ′))
+  -- ↓-W-node-con {i} {q = idp} {c} {c′} {φ} {φ′} n=n = fst= cφ=c′φ′ where
+  --   nd=nd-eqv : (node (c , φ) == node (c′ , φ′)) ≃ ((c , φ) == (c′ , φ′))
+  --   nd=nd-eqv = inr=inr-equiv (c , φ) (c′ , φ′) ∘e equiv-ap equiv-W (node (c , φ)) (node (c′ , φ′))
 
-  --           cφ=c′φ′ : (c , φ) == (c′ , φ′)
-  --           cφ=c′φ′ = –> nd=nd-eqv n=n
+  --   cφ=c′φ′ : (c , φ) == (c′ , φ′)
+  --   cφ=c′φ′ = –> nd=nd-eqv n=n
 
   -- ↓-W-node-dec : {i i′ : I} {q : i == i′} {c : γ P i} {c′ : γ P i′}
   --                {φ : ⟦ P ⟧⟦ c ≺ W P ⟧ } {φ′ : ⟦ P ⟧⟦ c′ ≺ W P ⟧ }
   --                → (r : (node (c , φ) == node (c′ , φ′) [ W P ↓ q ]))
   --                → φ == φ′ [ ⟦ P ⟧≺ (W P) ↓ pair= q (↓-W-node-con r) ]
-  -- ↓-W-node-dec {i} {q = idp} {c} {c′} {φ} {φ′} r = φ=φ′
-  --   where nd=nd-eqv : (node (c , φ) == node (c′ , φ′)) ≃ ((c , φ) == (c′ , φ′))
-  --         nd=nd-eqv = inr=inr-equiv (c , φ) (c′ , φ′) ∘e equiv-ap equiv-W (node (c , φ)) (node (c′ , φ′))
+  -- ↓-W-node-dec {i} {q = idp} {c} {c′} {φ} {φ′} r = φ=φ′ where
+  --   nd=nd-eqv : (node (c , φ) == node (c′ , φ′)) ≃ ((c , φ) == (c′ , φ′))
+  --   nd=nd-eqv = inr=inr-equiv (c , φ) (c′ , φ′) ∘e equiv-ap equiv-W (node (c , φ)) (node (c′ , φ′))
 
-  --         cφ=c′φ′ : (c , φ) == (c′ , φ′)
-  --         cφ=c′φ′ = –> nd=nd-eqv r
+  --   cφ=c′φ′ : (c , φ) == (c′ , φ′)
+  --   cφ=c′φ′ = –> nd=nd-eqv r
 
-  --         φ=φ′ : φ == φ′ [ ⟦ P ⟧≺ (W P) ↓ pair= idp (fst= cφ=c′φ′) ]
-  --         φ=φ′ = ↓-Σ-snd cφ=c′φ′
+  --   φ=φ′ : φ == φ′ [ ⟦ P ⟧≺ (W P) ↓ pair= idp (fst= cφ=c′φ′) ]
+  --   φ=φ′ = ↓-Σ-snd cφ=c′φ′
 
   ↓-W-node-lcl-in : {i : I} {c : γ P i} {φ φ′ : ⟦ P ⟧⟦ c ≺ W P ⟧}
                     (s : (p : ρ P c) → φ p == φ′ p)
@@ -100,12 +99,12 @@ module _ {ℓ} {I : Type ℓ} {P : Poly I I} where
   -- ↓-W-node-lcl-out : {i : I} {c : γ P i} {φ φ′ : ⟦ P ⟧⟦ c ≺ W P ⟧}
   --                 → (q : node (c , φ) == node (c , φ′))
   --                 → =Σ {A = γ P i} {B = λ c → ⟦ P ⟧⟦ c ≺ W P ⟧} (c , φ) (c , φ′)
-  -- ↓-W-node-lcl-out {i} {c} {φ} {φ′} q = fst= cφ=cφ′ , snd= cφ=cφ′
-  --   where nd=nd-eqv : (node (c , φ) == node (c , φ′)) ≃ ((c , φ) == (c , φ′))
-  --         nd=nd-eqv = inr=inr-equiv (c , φ) (c , φ′) ∘e equiv-ap equiv-W (node (c , φ)) (node (c , φ′))
+  -- ↓-W-node-lcl-out {i} {c} {φ} {φ′} q = fst= cφ=cφ′ , snd= cφ=cφ′ where
+  --   nd=nd-eqv : (node (c , φ) == node (c , φ′)) ≃ ((c , φ) == (c , φ′))
+  --   nd=nd-eqv = inr=inr-equiv (c , φ) (c , φ′) ∘e equiv-ap equiv-W (node (c , φ)) (node (c , φ′))
 
-  --         cφ=cφ′ : (c , φ) == (c , φ′)
-  --         cφ=cφ′ = –> nd=nd-eqv q
+  --   cφ=cφ′ : (c , φ) == (c , φ′)
+  --   cφ=cφ′ = –> nd=nd-eqv q
 
   -- ↓-W-node-lcl-in′ : {i : I} {c : γ P i} {q : c == c} {φ φ′ : ⟦ P ⟧⟦ c ≺ W P ⟧}
   --                   (s : φ == φ′ [ ⟦ P ⟧≺ (W P) ↓ pair= idp q ])
@@ -153,15 +152,15 @@ module _ {ℓ} {I : Type ℓ} {P : Poly I I} where
   --                 (s : (p : ρ P c) → φ p == φ′ p)
   --                 {l : leafOf (φ p)} {l′ : leafOf (φ′ p)} (t : l == l′ [ leafOf ↓ s p ])
   --                 → (p , l) == (p , l′) [ leafOf ↓ ↓-W-node-lcl-in s ]
-  -- ↓-leaf-lcl-in {i} {c} {p} s {l} {l′} t = ↓-ap-out leafOf′ (_,_ i) (↓-W-node-lcl-in s) po₂
-  --   where po₀ : l == l′ [ leafOf′ ↓ ap (_,_ (τ P p)) (s p) ]
-  --         po₀ = ↓-ap-in leafOf′ (λ w → (τ P p) , w) t
+  -- ↓-leaf-lcl-in {i} {c} {p} s {l} {l′} t = ↓-ap-out leafOf′ (_,_ i) (↓-W-node-lcl-in s) po₂ where
+  --   po₀ : l == l′ [ leafOf′ ↓ ap (_,_ (τ P p)) (s p) ]
+  --   po₀ = ↓-ap-in leafOf′ (λ w → (τ P p) , w) t
 
-  --         po₁ : l == l′ [ leafOf′ ↓ ap (_,_ (τ P p)) (↓-≺-out P {X = W P} (λ= s) idp) ]
-  --         po₁ = transport (λ x → l == l′ [ leafOf′ ↓ ap (_,_ (τ P p)) x ]) (! (app=-β s p)) po₀
+  --   po₁ : l == l′ [ leafOf′ ↓ ap (_,_ (τ P p)) (↓-≺-out P {X = W P} (λ= s) idp) ]
+  --   po₁ = transport (λ x → l == l′ [ leafOf′ ↓ ap (_,_ (τ P p)) x ]) (! (app=-β s p)) po₀
 
-  --         po₂ : (p , l) == (p , l′) [ leafOf′ ↓ (ap (_,_ i) (↓-W-node-lcl-in s)) ]
-  --         po₂ = ↓-leaf-in idp idp (λ= s) po₁
+  --   po₂ : (p , l) == (p , l′) [ leafOf′ ↓ (ap (_,_ i) (↓-W-node-lcl-in s)) ]
+  --   po₂ = ↓-leaf-in idp idp (λ= s) po₁
 
 --  ↓-leaf-lcl-in′ : {i : I} {c : γ P i} {p : ρ P c} {φ φ′ : ⟦ P ⟧⟦ c ≺ W P ⟧}
 --                  (s : (p : ρ P c) → φ p == φ′ p)

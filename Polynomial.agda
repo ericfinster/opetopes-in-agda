@@ -87,7 +87,7 @@ module _ {ℓ} {I : Type ℓ} (P : Poly I I) where
           {c : γ P i} {c′ : γ P i′} (c=c′ : c == c′ [ γ P ↓ i=i′ ])
           {p : ρ P c} {p′ : ρ P c′} (p=p′ : p == p′ [ ρ-Σ P ↓ pair= i=i′ c=c′ ])
           → τ P p == τ P p′
-  τ-inv {i=i′ = idp} idp idp  = idp
+  τ-inv {i=i′ = idp} idp idp = idp
 
   ↓-≺-in : {X : I → Type ℓ} {i i′ : I} {i=i′ : i == i′}
             {c : γ P i} {c′ : γ P i′} {c=c′ : c == c′ [ γ P ↓ i=i′ ]}
@@ -118,10 +118,3 @@ module _ {ℓ} {I : Type ℓ} (P : Poly I I) where
           {φ : ⟦ P ⟧⟦ c ≺ X ⟧} {φ′ : ⟦ P ⟧⟦ c′ ≺ X ⟧} (φ=φ′ : φ == φ′ [ ⟦ P ⟧≺ X ↓ pair= i=i′ c=c′ ])
           → ↓-≺-in (↓-≺-out {X = X} {i=i′ = i=i′} φ=φ′) == φ=φ′
   ↓-≺-η {i=i′ = idp} {c=c′ = idp} q = ! (λ=-η q)
-
-module _ {ℓ κ} {I J : Type ℓ} (P : Poly I J) {X : I → Type κ} where
-  □ : ∀ {ℓ′} → (Σ I X → Type ℓ′) → (Σ J (⟦ P ⟧ X) → Type _)
-  □ f (_ , _ , φ) = ∀ p → f (_ , φ p)
-
-  ⋄ : ∀ {ℓ′} → (Σ I X → Type ℓ′) → (Σ J (⟦ P ⟧ X) → Type _)
-  ⋄ f (_ , _ , φ) = Σ _ λ p → f (_ , φ p)
