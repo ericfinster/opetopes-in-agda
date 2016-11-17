@@ -169,8 +169,6 @@ module _ {ℓ} {I : Type ℓ} {P : Poly I I} where
 --                  → (p , l) == (p , l′) [ leafOf ↓ ↓-W-node-lcl-in s ]
 --  ↓-leaf-lcl-in′ {i} {c} {p} s {l} {l′} t = ↓-Σ-in {A = ρ P c} {C = λ q w →  } {!!} {!!} {!!}
 
---  quek : ∀ {i j} {A : Type i} {B : A → Type j} {x y : A}
-
 
    -- We need one more for the type coherence, but I don't quite see what we're doing here ....
 --   -- ↓-leaf-type-lcl-in : {i : I} {c : γ P i} {p : ρ P c} {φ₀ φ₁ : ⟦ P ⟧⟦ c ≺ W P ⟧}

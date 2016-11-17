@@ -1,5 +1,5 @@
 {-# OPTIONS --without-K #-}
--- {-# OPTIONS --show-implicit #-}
+--{-# OPTIONS --show-implicit #-}
 
 open import HoTT
 
@@ -8,7 +8,7 @@ open import Polynomial
 open import PolyMisc
 open import PolynomialMonad
 
-module Simple where
+module simple.SimpleExercise where
 
   open ADMIT
 
@@ -108,39 +108,49 @@ module Simple where
 
     thm-unit-r : {i : thm-idx} (δ : ⟦ P ⟧⟦ ⟪ η ⟫ lt ≺ γ P ⟧) →
                  δ (⟪ η ⟫↓ lt) == ⟪ μ ⟫ (⟪ η ⟫ lt , δ) [ γ P ↓ thm-ηp-compat ]
-    thm-unit-r {i} δ = thm
-      where
+    thm-unit-r {i} δ = thm where
 
-        i' : I
-        i' = (τ P (⟪ η ⟫↓ lt))
+      i' : I
+      i' = (τ P (⟪ η ⟫↓ lt))
 
-        i=i' : i == i'
-        i=i' = ⟪ η ⟫↓= lt
-        
-        c : γ P i'
-        c = δ (⟪ η ⟫↓ lt)
-        
-        const-dec : ⟦ P ⟧⟦ ⟪ η ⟫ {j = i'} lt ≺ γ P ⟧
-        const-dec = ⟪ poly-id P ∣ η ⟫⇕ (cst c)
+      i=i' : i == i'
+      i=i' = ⟪ η ⟫↓= lt
 
-        unit-law : ⟪ μ ⟫ (⟪ η ⟫ lt , const-dec) == c
-        unit-law = (γ≈ ∘ η-right-law) c
+      c : γ P i'
+      c = δ (⟪ η ⟫↓ lt)
 
-        const-dec-coh : δ (⟪ η ⟫↓ {j = i} lt) == (const-dec (⟪ η ⟫↓ {j = i'} lt)) [ γ P ↓ ⟪ η ⟫↓= lt ]
-        const-dec-coh = ⟪ poly-id P ∣ η ⟫⇕-coh (cst c) lt
+      const-dec : ⟦ P ⟧⟦ ⟪ η ⟫ {j = i'} lt ≺ γ P ⟧
+      const-dec = ⟪ poly-id P ∣ η ⟫⇕ (cst c)
 
-        a-goal : δ == const-dec [ ⟦ P ⟧≺ (γ P) ↓ pair= i=i' (apd (λ x → ⟪ η ⟫ {j = x} lt) i=i') ]
-        a-goal = η-dec-unique M i=i' δ const-dec {!!}
-          
-                   -- (q : δ₀ (⟪ η ⟫↓ lt) == δ₁ (⟪ η ⟫↓ lt) [ γ P ↓ ap (λ j → τ P (⟪ η ⟫↓ {j = j} lt)) p ])
+      unit-law : ⟪ μ ⟫ (⟪ η ⟫ lt , const-dec) == c
+      unit-law = (γ≈ ∘ η-right-law) c
 
-        next-goal : ⟪ μ ⟫ (⟪ η ⟫ lt , δ) == ⟪ μ ⟫ (⟪ η ⟫ lt , const-dec) [ γ P ↓ ⟪ η ⟫↓= lt ]
-        next-goal = μ-inv M {i₀ = i} {i₁ = i'} (⟪ η ⟫ lt) (⟪ η ⟫ lt) δ const-dec i=i'
-                          (apd (λ x → ⟪ η ⟫ {j = x} lt) i=i')
-                          a-goal
+      const-dec-coh : δ (⟪ η ⟫↓ {j = i} lt) == const-dec (⟪ η ⟫↓ {j = i'} lt) [ γ P ↓ ⟪ η ⟫↓= lt ]
+      const-dec-coh = ⟪ poly-id P ∣ η ⟫⇕-coh (cst c) lt
 
-        thm : δ (⟪ η ⟫↓ lt) == ⟪ μ ⟫ (⟪ η ⟫ lt , δ) [ γ P ↓ thm-ηp-compat ]
-        thm = !ᵈ (next-goal ∙'ᵈ unit-law)
+      a-goal : δ == const-dec [ ⟦ P ⟧≺ (γ P) ↓ pair= i=i' (apd (λ x → ⟪ η ⟫ {j = x} lt) i=i') ]
+      a-goal = η-dec-unique' i=i' δ const-dec (↓-ap-in (γ P) (λ x → τ P (⟪ η ⟫↓ {j = x} lt)) const-dec-coh') where
+        η-dec-unique' : {i : I} {p : ρ P {j = i} (⟪ η ⟫ lt)} (e : i == τ P p)
+          (δ₀ : ⟦ P ⟧⟦ ⟪ η ⟫ {j = i} lt ≺ γ P ⟧)
+          (δ₁ : ⟦ P ⟧⟦ ⟪ η ⟫ {j = τ P p} lt ≺ γ P ⟧)
+          (q : δ₀ (⟪ η ⟫↓ lt) == δ₁ (⟪ η ⟫↓ lt) [ γ P ↓ ap (λ j → τ P (⟪ η ⟫↓ {j = j} lt)) e ])
+          → δ₀ == δ₁ [ ⟦ P ⟧≺ (γ P) ↓ pair= e (apd (λ x → ⟪ η ⟫ {j = x} lt) e) ]
+        η-dec-unique' = {!!}
+
+        thing : ∀ {j} → γ P j == γ P (τ P (⟪ η ⟫↓ {j = j} lt))
+        thing {j} = ap (γ P) (⟪ η ⟫↓= lt)
+
+        const-dec-coh' : δ (⟪ η ⟫↓ {j = i} lt) == const-dec (⟪ η ⟫↓ {j = i'} lt)
+                           [ (γ P) ∘ (λ x → τ P (⟪ η ⟫↓ {j = x} lt)) ↓ i=i' ]
+        const-dec-coh' = {!thing and const-dec-coh!}
+
+      next-goal : ⟪ μ ⟫ (⟪ η ⟫ lt , δ) == ⟪ μ ⟫ (⟪ η ⟫ lt , const-dec) [ γ P ↓ ⟪ η ⟫↓= lt ]
+      next-goal = μ-inv M {i₀ = i} {i₁ = i'} (⟪ η ⟫ lt) (⟪ η ⟫ lt) δ const-dec i=i'
+                        (apd (λ x → ⟪ η ⟫ {j = x} lt) i=i')
+                        a-goal
+
+      thm : δ (⟪ η ⟫↓ lt) == ⟪ μ ⟫ (⟪ η ⟫ lt , δ) [ γ P ↓ thm-ηp-compat ]
+      thm = !ᵈ (next-goal ∙'ᵈ unit-law)
 
     theorem : Monad
     Monad.Idx theorem = thm-idx

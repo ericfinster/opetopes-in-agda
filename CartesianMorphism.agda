@@ -31,8 +31,7 @@ module CartesianMorphism where
   module _ {ℓ} {I J K L : Type ℓ}
            {f : I → K} {g : J → L}
            {P : Poly I J} {Q : Poly K L}
-           (α : ⟦ f ∣ g ⟧⟦ P ⇒ Q ⟧) {j : J}
-         where
+           (α : ⟦ f ∣ g ⟧⟦ P ⇒ Q ⟧) {j : J} where
 
     ⟪_⟫ : γ P j → γ Q (g j)
     ⟪_⟫ = γ-map α
@@ -81,8 +80,8 @@ module CartesianMorphism where
       ⟪_⟫↓= : (p : ρ P c) → f (τ P p) == τ Q (⟪_⟫↓ p)
       ⟪_⟫↓= = τ-coh α {c = c}
 
-      ⟪_⟫↑= : (q : ρ Q ⟪ c ⟫) → f (τ P (⟪_⟫↑ q)) == τ Q q
-      ⟪ q ⟫↑= = (⟪_⟫↓= (⟪_⟫↑ q)) ∙ ap (τ Q) (⟪_⟫⇅ q)
+      ⟪_⟫↑= : (q : ρ Q (⟪_⟫ c)) → f (τ P (⟪_⟫↑ q)) == τ Q q
+      ⟪_⟫↑= q = (⟪_⟫↓= (⟪_⟫↑ q)) ∙ ap (τ Q) (⟪_⟫⇅ q)
 
       --
       -- The following says that for any q : p₀ == p₁,
@@ -96,7 +95,12 @@ module CartesianMorphism where
 
       ⟪_⟫■ : {p₀ p₁ : ρ P c} (q : p₀ == p₁) →
              ! (ap (f ∘ τ P) q) ∙ ⟪_⟫↓= p₀ ∙ ap (τ Q) (ap (⟪_⟫↓) q) == ⟪_⟫↓= p₁
-      ⟪_⟫■ idp = ∙-unit-r ( ⟪_⟫↓= _)
+      ⟪_⟫■ idp = ∙-unit-r (⟪_⟫↓= _)
+
+      ⟪_⟫■' : {p p' : ρ P c} (q : p == p')
+              → ap (f ∘ τ P ∘ ⟪_⟫↑ ∘ ⟪_⟫↓) (! q) ∙ ⟪_⟫↑= (⟪_⟫↓ p) ∙ ap (τ Q ∘ ⟪_⟫↓) q == ⟪_⟫↑= (⟪_⟫↓ p')
+      ⟪_⟫■' idp = ∙-unit-r (⟪_⟫↑= _)
+
 
   module _ {ℓ} {I J K L : Type ℓ}
            {f : I → K} {g : J → L}
@@ -122,13 +126,31 @@ module CartesianMorphism where
 
             lemma = transport Y (⟪ α ⟫↓= p) (T (φ p))
                       =⟨ ! (⟪ α ⟫■ (⟪ α ⟫⇵ p))|in-ctx (λ x → transport Y x (T (φ p))) ⟩
-                    transport Y (! (ap (f ∘ τ P) (⟪ α ⟫⇵ p)) ∙ ⟪ α ⟫↓= (⟪ α ⟫↑ (⟪ α ⟫↓ p)) ∙ ap (τ Q) (ap ⟪ α ⟫↓ (⟪ α ⟫⇵ p))) (T (φ p))
-                      =⟨ ⟪ α ⟫-adj p |in-ctx (λ x → transport Y (! (ap (f ∘ τ P) (⟪ α ⟫⇵ p)) ∙ ⟪ α ⟫↓= (⟪ α ⟫↑ (⟪ α ⟫↓ p)) ∙ ap (τ Q) x) (T (φ p))) ⟩
-                    transport Y (! (ap (f ∘ τ P) (⟪ α ⟫⇵ p)) ∙ (⟪ α ⟫↓= (⟪ α ⟫↑ (⟪ α ⟫↓ p)) ∙ ap (τ Q) (⟪ α ⟫⇅ (⟪ α ⟫↓ p)))) (T (φ p))
+                    transport Y (! (ap (f ∘ τ P) (⟪ α ⟫⇵ p)) ∙ ⟪ α ⟫↓= (⟪ α ⟫↑ (⟪ α ⟫↓ p))
+                                                             ∙ ap (τ Q) (ap ⟪ α ⟫↓ (⟪ α ⟫⇵ p))) (T (φ p))
+                      =⟨ ⟪ α ⟫-adj p |in-ctx (λ x → transport Y (! (ap (f ∘ τ P) (⟪ α ⟫⇵ p))
+                                                                  ∙ ⟪ α ⟫↓= (⟪ α ⟫↑ (⟪ α ⟫↓ p))
+                                                                  ∙ ap (τ Q) x) (T (φ p))) ⟩
+                    transport Y (! (ap (f ∘ τ P) (⟪ α ⟫⇵ p)) ∙ (⟪ α ⟫↓= (⟪ α ⟫↑ (⟪ α ⟫↓ p))
+                                                             ∙ ap (τ Q) (⟪ α ⟫⇅ (⟪ α ⟫↓ p)))) (T (φ p))
                       =⟨ trans-∙ (! (ap (f ∘ τ P) (⟪ α ⟫⇵ p))) (⟪ α ⟫↑= (⟪ α ⟫↓ p)) (T (φ p)) ⟩
                     transport Y (⟪ α ⟫↑= (⟪ α ⟫↓ p)) (transport Y (! (ap (f ∘ τ P) (⟪ α ⟫⇵ p))) (T (φ p)))
                       =⟨ φ-expand |in-ctx (λ x → transport Y (⟪ α ⟫↑= (⟪ α ⟫↓ p)) x) ⟩
                     transport Y (⟪ α ⟫↑= (⟪ α ⟫↓ p)) (T (φ (⟪ α ⟫↑ (⟪ α ⟫↓ p)))) ∎
+
+    -- notsure : (α : ⟦ f ∣ g ⟧⟦ P ⇒ Q ⟧)
+    --           (X : I → Type ℓ) (Y : K → Type ℓ)
+    --           {j : J} {c : γ P j} (φ : ⟦ Q ⟧⟦ ⟪ α ⟫ c ≺ Y ⟧) (p : ρ Q (⟪ α ⟫ c))
+    --        → transport Y (⟪ α ⟫↑= p) ? == transport Y (⟪ α ⟫↓= (⟪ α ⟫↑ p)) ?
+    -- notsure = ?
+
+
+    push' : (α : ⟦ f ∣ g ⟧⟦ P ⇒ Q ⟧)
+           (X : I → Type ℓ) (Y : K → Type ℓ)
+           (T : {i : I} → X i → Y (f i))
+           {j : J} {c : γ P j}
+        → ⟦ P ⟧⟦ c ≺ X ⟧ → ⟦ Q ⟧⟦ ⟪ α ⟫ c ≺ Y ⟧
+    push' α X Y T φ q = transport Y (⟪ α ⟫↑= q) (T (φ (⟪ α ⟫↑ q)))
 
 
     -- Specialized to the case where T is the identity, the above
