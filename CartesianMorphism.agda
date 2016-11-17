@@ -31,8 +31,7 @@ module CartesianMorphism where
   module _ {ℓ} {I J K L : Type ℓ}
            {f : I → K} {g : J → L}
            {P : Poly I J} {Q : Poly K L}
-           (α : ⟦ f ∣ g ⟧⟦ P ⇒ Q ⟧) {j : J}
-         where
+           (α : ⟦ f ∣ g ⟧⟦ P ⇒ Q ⟧) {j : J} where
 
     ⟪_⟫ : γ P j → γ Q (g j)
     ⟪_⟫ = γ-map α
@@ -96,7 +95,7 @@ module CartesianMorphism where
 
       ⟪_⟫■ : {p₀ p₁ : ρ P c} (q : p₀ == p₁) →
              ! (ap (f ∘ τ P) q) ∙ ⟪_⟫↓= p₀ ∙ ap (τ Q) (ap (⟪_⟫↓) q) == ⟪_⟫↓= p₁
-      ⟪_⟫■ idp = ∙-unit-r ( ⟪_⟫↓= _)
+      ⟪_⟫■ idp = ∙-unit-r (⟪_⟫↓= _)
 
   module _ {ℓ} {I J K L : Type ℓ}
            {f : I → K} {g : J → L}
@@ -115,20 +114,19 @@ module CartesianMorphism where
                (T : {i : I} → X i → Y (f i))
                {j : J} {c : γ P j} (φ : ⟦ P ⟧⟦ c ≺ X ⟧) (p : ρ P c) →
                T (φ p) == push α X Y T φ (⟪ α ⟫↓ p) [ Y ↓ ⟪ α ⟫↓= p ]
-    push-coh α X Y T φ p = from-transp Y (⟪ α ⟫↓= p) lemma
+    push-coh α X Y T φ p = from-transp Y (⟪ α ⟫↓= p) lemma where
+      φ-expand : transport Y (! (ap (f ∘ τ P) (⟪ α ⟫⇵ p))) (T (φ p)) == T (φ (⟪ α ⟫↑ (⟪ α ⟫↓ p)))
+      φ-expand = to-transp (!ᵈ (↓-ap-in Y (f ∘ τ P) (apd (T ∘ φ) (⟪ α ⟫⇵ p))))
 
-      where φ-expand : transport Y (! (ap (f ∘ τ P) (⟪ α ⟫⇵ p))) (T (φ p)) == T (φ (⟪ α ⟫↑ (⟪ α ⟫↓ p)))
-            φ-expand = to-transp (!ᵈ (↓-ap-in Y (f ∘ τ P) (apd (T ∘ φ) (⟪ α ⟫⇵ p))))
-
-            lemma = transport Y (⟪ α ⟫↓= p) (T (φ p))
-                      =⟨ ! (⟪ α ⟫■ (⟪ α ⟫⇵ p))|in-ctx (λ x → transport Y x (T (φ p))) ⟩
-                    transport Y (! (ap (f ∘ τ P) (⟪ α ⟫⇵ p)) ∙ ⟪ α ⟫↓= (⟪ α ⟫↑ (⟪ α ⟫↓ p)) ∙ ap (τ Q) (ap ⟪ α ⟫↓ (⟪ α ⟫⇵ p))) (T (φ p))
-                      =⟨ ⟪ α ⟫-adj p |in-ctx (λ x → transport Y (! (ap (f ∘ τ P) (⟪ α ⟫⇵ p)) ∙ ⟪ α ⟫↓= (⟪ α ⟫↑ (⟪ α ⟫↓ p)) ∙ ap (τ Q) x) (T (φ p))) ⟩
-                    transport Y (! (ap (f ∘ τ P) (⟪ α ⟫⇵ p)) ∙ (⟪ α ⟫↓= (⟪ α ⟫↑ (⟪ α ⟫↓ p)) ∙ ap (τ Q) (⟪ α ⟫⇅ (⟪ α ⟫↓ p)))) (T (φ p))
-                      =⟨ trans-∙ (! (ap (f ∘ τ P) (⟪ α ⟫⇵ p))) (⟪ α ⟫↑= (⟪ α ⟫↓ p)) (T (φ p)) ⟩
-                    transport Y (⟪ α ⟫↑= (⟪ α ⟫↓ p)) (transport Y (! (ap (f ∘ τ P) (⟪ α ⟫⇵ p))) (T (φ p)))
-                      =⟨ φ-expand |in-ctx (λ x → transport Y (⟪ α ⟫↑= (⟪ α ⟫↓ p)) x) ⟩
-                    transport Y (⟪ α ⟫↑= (⟪ α ⟫↓ p)) (T (φ (⟪ α ⟫↑ (⟪ α ⟫↓ p)))) ∎
+      lemma = transport Y (⟪ α ⟫↓= p) (T (φ p))
+                =⟨ ! (⟪ α ⟫■ (⟪ α ⟫⇵ p))|in-ctx (λ x → transport Y x (T (φ p))) ⟩
+              transport Y (! (ap (f ∘ τ P) (⟪ α ⟫⇵ p)) ∙ ⟪ α ⟫↓= (⟪ α ⟫↑ (⟪ α ⟫↓ p)) ∙ ap (τ Q) (ap ⟪ α ⟫↓ (⟪ α ⟫⇵ p))) (T (φ p))
+                =⟨ ⟪ α ⟫-adj p |in-ctx (λ x → transport Y (! (ap (f ∘ τ P) (⟪ α ⟫⇵ p)) ∙ ⟪ α ⟫↓= (⟪ α ⟫↑ (⟪ α ⟫↓ p)) ∙ ap (τ Q) x) (T (φ p))) ⟩
+              transport Y (! (ap (f ∘ τ P) (⟪ α ⟫⇵ p)) ∙ (⟪ α ⟫↓= (⟪ α ⟫↑ (⟪ α ⟫↓ p)) ∙ ap (τ Q) (⟪ α ⟫⇅ (⟪ α ⟫↓ p)))) (T (φ p))
+                =⟨ trans-∙ (! (ap (f ∘ τ P) (⟪ α ⟫⇵ p))) (⟪ α ⟫↑= (⟪ α ⟫↓ p)) (T (φ p)) ⟩
+              transport Y (⟪ α ⟫↑= (⟪ α ⟫↓ p)) (transport Y (! (ap (f ∘ τ P) (⟪ α ⟫⇵ p))) (T (φ p)))
+                =⟨ φ-expand |in-ctx (λ x → transport Y (⟪ α ⟫↑= (⟪ α ⟫↓ p)) x) ⟩
+              transport Y (⟪ α ⟫↑= (⟪ α ⟫↓ p)) (T (φ (⟪ α ⟫↑ (⟪ α ⟫↓ p)))) ∎
 
 
     -- Specialized to the case where T is the identity, the above
@@ -174,70 +172,67 @@ module CartesianMorphism where
     ⟪_∣_⟫⇑-coh : (α : ⟦ f ∣ g ⟧⟦ P ⇒ Q ⟧) (X : K → Type ℓ) {j : J} {c : γ P j}
                 (ψ : ⟦ Q ⟧⟦ ⟪ α ⟫ c ≺ X ⟧) (q : ρ Q (⟪ α ⟫ c)) →
                  ψ q == ⟪ α ∣ X ⟫⇑ ψ (⟪ α ⟫↑ q) [ X ↓ ! (⟪ α ⟫↑= q) ]
-    ⟪ α ∣ X ⟫⇑-coh ψ q = from-transp X (! (⟪ α ⟫↑= q)) lemma
+    ⟪ α ∣ X ⟫⇑-coh ψ q = from-transp X (! (⟪ α ⟫↑= q)) lemma where
+      ψ-expand : transport X (! (ap (τ Q) (⟪ α ⟫⇅ q))) (ψ q) == (ψ (⟪ α ⟫↓ (⟪ α ⟫↑ q)))
+      ψ-expand = to-transp (!ᵈ (↓-ap-in X (τ Q) (apd ψ (⟪ α ⟫⇅ q))))
 
-      where ψ-expand : transport X (! (ap (τ Q) (⟪ α ⟫⇅ q))) (ψ q) == (ψ (⟪ α ⟫↓ (⟪ α ⟫↑ q)))
-            ψ-expand = to-transp (!ᵈ (↓-ap-in X (τ Q) (apd ψ (⟪ α ⟫⇅ q))))
-
-            lemma = transport X (! (⟪ α ⟫↓= (⟪ α ⟫↑ q) ∙ ap (τ Q) (⟪ α ⟫⇅ q))) (ψ q)
-                      =⟨ !-∙ (⟪ α ⟫↓= (⟪ α ⟫↑ q)) (ap (τ Q) (⟪ α ⟫⇅ q))  |in-ctx (λ x → transport X x (ψ q)) ⟩
-                    transport X ((! (ap (τ Q) (⟪ α ⟫⇅ q))) ∙ (! (⟪ α ⟫↓= (⟪ α ⟫↑ q)))) (ψ q)
-                      =⟨ trans-∙ ((! (ap (τ Q) (⟪ α ⟫⇅ q)))) ((! (⟪ α ⟫↓= (⟪ α ⟫↑ q)))) (ψ q) ⟩
-                    transport X (! (⟪ α ⟫↓= (⟪ α ⟫↑ q))) (transport X (! (ap (τ Q) (⟪ α ⟫⇅ q))) (ψ q))
-                      =⟨ ψ-expand |in-ctx (λ x → transport X (! (⟪ α ⟫↓= (⟪ α ⟫↑ q))) x) ⟩  -- expand ψ
-                    ⟪ α ∣ X ⟫⇑ ψ (⟪ α ⟫↑ q) ∎
+      lemma = transport X (! (⟪ α ⟫↓= (⟪ α ⟫↑ q) ∙ ap (τ Q) (⟪ α ⟫⇅ q))) (ψ q)
+                =⟨ !-∙ (⟪ α ⟫↓= (⟪ α ⟫↑ q)) (ap (τ Q) (⟪ α ⟫⇅ q))  |in-ctx (λ x → transport X x (ψ q)) ⟩
+              transport X ((! (ap (τ Q) (⟪ α ⟫⇅ q))) ∙ (! (⟪ α ⟫↓= (⟪ α ⟫↑ q)))) (ψ q)
+                =⟨ trans-∙ ((! (ap (τ Q) (⟪ α ⟫⇅ q)))) ((! (⟪ α ⟫↓= (⟪ α ⟫↑ q)))) (ψ q) ⟩
+              transport X (! (⟪ α ⟫↓= (⟪ α ⟫↑ q))) (transport X (! (ap (τ Q) (⟪ α ⟫⇅ q))) (ψ q))
+                =⟨ ψ-expand |in-ctx (λ x → transport X (! (⟪ α ⟫↓= (⟪ α ⟫↑ q))) x) ⟩  -- expand ψ
+              ⟪ α ∣ X ⟫⇑ ψ (⟪ α ⟫↑ q) ∎
 
     ⟪_∣_⟫⇕-l : (α : ⟦ f ∣ g ⟧⟦ P ⇒ Q ⟧) (X : K → Type ℓ) {j : J} {c : γ P j}
               (φ : ⟦ P ⟧⟦ c ≺ X ∘ f ⟧) (p : ρ P c) →
                ⟪ α ∣ X ⟫⇑ (⟪ α ∣ X ⟫⇓ φ) p == φ p
-    ⟪ α ∣ X ⟫⇕-l φ p = ! (transport (λ x → φ p == ⟪ α ∣ X ⟫⇑ (⟪ α ∣ X ⟫⇓ φ) p [ X ↓ x ]) po-path-is-id po-lemma)
+    ⟪ α ∣ X ⟫⇕-l φ p = ! (transport (λ x → φ p == ⟪ α ∣ X ⟫⇑ (⟪ α ∣ X ⟫⇓ φ) p [ X ↓ x ]) po-path-is-id po-lemma) where
+      po-path : f (τ P p) == f (τ P p)
+      po-path = ⟪ α ⟫↓= p ∙ ! (⟪ α ⟫↓= (⟪ α ⟫↑ (⟪ α ⟫↓ p)) ∙ ap (τ Q) (⟪ α ⟫⇅ (⟪ α ⟫↓ p))) ∙ ap (f ∘ τ P) (⟪ α ⟫⇵ p)
 
-      where po-path : f (τ P p) == f (τ P p)
-            po-path = ⟪ α ⟫↓= p ∙ ! (⟪ α ⟫↓= (⟪ α ⟫↑ (⟪ α ⟫↓ p)) ∙ ap (τ Q) (⟪ α ⟫⇅ (⟪ α ⟫↓ p))) ∙ ap (f ∘ τ P) (⟪ α ⟫⇵ p)
+      po-lemma : φ p == ⟪ α ∣ X ⟫⇑ (⟪ α ∣ X ⟫⇓ φ) p [ X ↓ po-path ]
+      po-lemma = ⟪ α ∣ X ⟫⇓-coh φ p ∙ᵈ
+                 ⟪ α ∣ X ⟫⇑-coh (⟪ α ∣ X ⟫⇓ φ) (⟪ α ⟫↓ p) ∙ᵈ
+                 ↓-ap-in X (f ∘ τ P) (apd (⟪ α ∣ X ⟫⇑ (⟪ α ∣ X ⟫⇓ φ)) (⟪ α ⟫⇵ p))
 
-            po-lemma : φ p == ⟪ α ∣ X ⟫⇑ (⟪ α ∣ X ⟫⇓ φ) p [ X ↓ po-path ]
-            po-lemma = ⟪ α ∣ X ⟫⇓-coh φ p ∙ᵈ
-                       ⟪ α ∣ X ⟫⇑-coh (⟪ α ∣ X ⟫⇓ φ) (⟪ α ⟫↓ p) ∙ᵈ
-                       ↓-ap-in X (f ∘ τ P) (apd (⟪ α ∣ X ⟫⇑ (⟪ α ∣ X ⟫⇓ φ)) (⟪ α ⟫⇵ p))
-
-            po-path-is-id : po-path == idp
-            po-path-is-id = ⟪ α ⟫↓= p ∙ ! (⟪ α ⟫↓= (⟪ α ⟫↑ (⟪ α ⟫↓ p)) ∙ ap (τ Q) (⟪ α ⟫⇅ (⟪ α ⟫↓ p))) ∙ ap (f ∘ τ P) (⟪ α ⟫⇵ p)
-                              =⟨ ! (!-! (ap (f ∘ τ P) (⟪ α ⟫⇵ p))) |in-ctx (λ x → ⟪ α ⟫↓= p ∙ ! (⟪ α ⟫↓= (⟪ α ⟫↑ (⟪ α ⟫↓ p)) ∙ ap (τ Q) (⟪ α ⟫⇅ (⟪ α ⟫↓ p))) ∙ x) ⟩
-                            ⟪ α ⟫↓= p ∙ ! (⟪ α ⟫↓= (⟪ α ⟫↑ (⟪ α ⟫↓ p)) ∙ ap (τ Q) (⟪ α ⟫⇅ (⟪ α ⟫↓ p))) ∙ ! (! (ap (f ∘ τ P) (⟪ α ⟫⇵ p)))
-                              =⟨ ∙-! (⟪ α ⟫↓= (⟪ α ⟫↑ (⟪ α ⟫↓ p)) ∙ ap (τ Q) (⟪ α ⟫⇅ (⟪ α ⟫↓ p))) (! (ap (f ∘ τ P) (⟪ α ⟫⇵ p))) |in-ctx (λ x → ⟪ α ⟫↓= p ∙ x) ⟩
-                            ⟪ α ⟫↓= p ∙ ! (! (ap (f ∘ τ P) (⟪ α ⟫⇵ p)) ∙ ⟪ α ⟫↓= (⟪ α ⟫↑ (⟪ α ⟫↓ p)) ∙ ap (τ Q) (⟪ α ⟫⇅ (⟪ α ⟫↓ p)))
-                              =⟨ ! (⟪ α ⟫-adj p) |in-ctx (λ x → ⟪ α ⟫↓= p ∙ ! (! (ap (f ∘ τ P) (⟪ α ⟫⇵ p)) ∙ ⟪ α ⟫↓= (⟪ α ⟫↑ (⟪ α ⟫↓ p)) ∙ ap (τ Q) x)) ⟩
-                            ⟪ α ⟫↓= p ∙ ! (! (ap (f ∘ τ P) (⟪ α ⟫⇵ p)) ∙ ⟪ α ⟫↓= (⟪ α ⟫↑ (⟪ α ⟫↓ p)) ∙ ap (τ Q) (ap (⟪ α ⟫↓) (⟪ α ⟫⇵ p)))
-                              =⟨ ⟪ α ⟫■ (⟪ α ⟫⇵ p) |in-ctx (λ x → ⟪ α ⟫↓= p ∙ ! x) ⟩
-                            ⟪ α ⟫↓= p ∙ ! (⟪ α ⟫↓= p)
-                              =⟨ !-inv-r (⟪ α ⟫↓= p) ⟩
-                            idp ∎
+      po-path-is-id : po-path == idp
+      po-path-is-id = ⟪ α ⟫↓= p ∙ ! (⟪ α ⟫↓= (⟪ α ⟫↑ (⟪ α ⟫↓ p)) ∙ ap (τ Q) (⟪ α ⟫⇅ (⟪ α ⟫↓ p))) ∙ ap (f ∘ τ P) (⟪ α ⟫⇵ p)
+                        =⟨ ! (!-! (ap (f ∘ τ P) (⟪ α ⟫⇵ p))) |in-ctx (λ x → ⟪ α ⟫↓= p ∙ ! (⟪ α ⟫↓= (⟪ α ⟫↑ (⟪ α ⟫↓ p)) ∙ ap (τ Q) (⟪ α ⟫⇅ (⟪ α ⟫↓ p))) ∙ x) ⟩
+                      ⟪ α ⟫↓= p ∙ ! (⟪ α ⟫↓= (⟪ α ⟫↑ (⟪ α ⟫↓ p)) ∙ ap (τ Q) (⟪ α ⟫⇅ (⟪ α ⟫↓ p))) ∙ ! (! (ap (f ∘ τ P) (⟪ α ⟫⇵ p)))
+                        =⟨ ∙-! (⟪ α ⟫↓= (⟪ α ⟫↑ (⟪ α ⟫↓ p)) ∙ ap (τ Q) (⟪ α ⟫⇅ (⟪ α ⟫↓ p))) (! (ap (f ∘ τ P) (⟪ α ⟫⇵ p))) |in-ctx (λ x → ⟪ α ⟫↓= p ∙ x) ⟩
+                      ⟪ α ⟫↓= p ∙ ! (! (ap (f ∘ τ P) (⟪ α ⟫⇵ p)) ∙ ⟪ α ⟫↓= (⟪ α ⟫↑ (⟪ α ⟫↓ p)) ∙ ap (τ Q) (⟪ α ⟫⇅ (⟪ α ⟫↓ p)))
+                        =⟨ ! (⟪ α ⟫-adj p) |in-ctx (λ x → ⟪ α ⟫↓= p ∙ ! (! (ap (f ∘ τ P) (⟪ α ⟫⇵ p)) ∙ ⟪ α ⟫↓= (⟪ α ⟫↑ (⟪ α ⟫↓ p)) ∙ ap (τ Q) x)) ⟩
+                      ⟪ α ⟫↓= p ∙ ! (! (ap (f ∘ τ P) (⟪ α ⟫⇵ p)) ∙ ⟪ α ⟫↓= (⟪ α ⟫↑ (⟪ α ⟫↓ p)) ∙ ap (τ Q) (ap (⟪ α ⟫↓) (⟪ α ⟫⇵ p)))
+                        =⟨ ⟪ α ⟫■ (⟪ α ⟫⇵ p) |in-ctx (λ x → ⟪ α ⟫↓= p ∙ ! x) ⟩
+                      ⟪ α ⟫↓= p ∙ ! (⟪ α ⟫↓= p)
+                        =⟨ !-inv-r (⟪ α ⟫↓= p) ⟩
+                      idp ∎
 
     ⟪_∣_⟫⇕-r : (α : ⟦ f ∣ g ⟧⟦ P ⇒ Q ⟧) (X : K → Type ℓ) {j : J} {c : γ P j}
               (ψ : ⟦ Q ⟧⟦ ⟪ α ⟫ c ≺ X ⟧) (q : ρ Q ( ⟪ α ⟫ c)) →
                ⟪ α ∣ X ⟫⇓ (⟪ α ∣ X ⟫⇑ ψ) q == ψ q
-    ⟪ α ∣ X ⟫⇕-r ψ q = ! (transport (λ x → ψ q == ⟪ α ∣ X ⟫⇓ (⟪ α ∣ X ⟫⇑ ψ) q [ X ↓ x ]) po-path-is-id po-lemma)
+    ⟪ α ∣ X ⟫⇕-r ψ q = ! (transport (λ x → ψ q == ⟪ α ∣ X ⟫⇓ (⟪ α ∣ X ⟫⇑ ψ) q [ X ↓ x ]) po-path-is-id po-lemma) where
+      po-path : τ Q q == τ Q q
+      po-path = ! (⟪ α ⟫↑= q) ∙ ⟪ α ⟫↓= (⟪ α ⟫↑ q) ∙ ap (τ Q) (⟪ α ⟫⇅ q)
 
-      where po-path : τ Q q == τ Q q
-            po-path = ! (⟪ α ⟫↑= q) ∙ ⟪ α ⟫↓= (⟪ α ⟫↑ q) ∙ ap (τ Q) (⟪ α ⟫⇅ q)
+      po-lemma : ψ q == ⟪ α ∣ X ⟫⇓ (⟪ α ∣ X ⟫⇑ ψ) q [ X ↓ po-path ]
+      po-lemma = ⟪ α ∣ X ⟫⇑-coh ψ q ∙ᵈ
+                 ⟪ α ∣ X ⟫⇓-coh (⟪ α ∣ X ⟫⇑ ψ) (⟪ α ⟫↑ q) ∙ᵈ
+                 ↓-ap-in X (τ Q) (apd (⟪ α ∣ X ⟫⇓ (⟪ α ∣ X ⟫⇑ ψ)) (⟪ α ⟫⇅ q))
 
-            po-lemma : ψ q == ⟪ α ∣ X ⟫⇓ (⟪ α ∣ X ⟫⇑ ψ) q [ X ↓ po-path ]
-            po-lemma = ⟪ α ∣ X ⟫⇑-coh ψ q ∙ᵈ
-                       ⟪ α ∣ X ⟫⇓-coh (⟪ α ∣ X ⟫⇑ ψ) (⟪ α ⟫↑ q) ∙ᵈ
-                       ↓-ap-in X (τ Q) (apd (⟪ α ∣ X ⟫⇓ (⟪ α ∣ X ⟫⇑ ψ)) (⟪ α ⟫⇅ q))
-
-            po-path-is-id : po-path == idp
-            po-path-is-id = ! (⟪ α ⟫↓= (⟪ α ⟫↑ q) ∙ ap (τ Q) (⟪ α ⟫⇅ q)) ∙ ⟪ α ⟫↓= (⟪ α ⟫↑ q) ∙ ap (τ Q) (⟪ α ⟫⇅ q)
-                              =⟨ !-∙ (⟪ α ⟫↓= (⟪ α ⟫↑ q)) (ap (τ Q) (⟪ α ⟫⇅ q)) |in-ctx (λ x → x ∙ ⟪ α ⟫↓= (⟪ α ⟫↑ q) ∙ ap (τ Q) (⟪ α ⟫⇅ q)) ⟩
-                            (! (ap (τ Q) (⟪ α ⟫⇅ q)) ∙ ! (⟪ α ⟫↓= (⟪ α ⟫↑ q))) ∙ ⟪ α ⟫↓= (⟪ α ⟫↑ q) ∙ ap (τ Q) (⟪ α ⟫⇅ q)
-                              =⟨ ∙-assoc (! (ap (τ Q) (⟪ α ⟫⇅ q))) (! (⟪ α ⟫↓= (⟪ α ⟫↑ q))) (⟪ α ⟫↓= (⟪ α ⟫↑ q) ∙ ap (τ Q) (⟪ α ⟫⇅ q)) ⟩
-                            ! (ap (τ Q) (⟪ α ⟫⇅ q)) ∙ ! (⟪ α ⟫↓= (⟪ α ⟫↑ q)) ∙ ⟪ α ⟫↓= (⟪ α ⟫↑ q) ∙ ap (τ Q) (⟪ α ⟫⇅ q)
-                              =⟨ ! (∙-assoc (! (⟪ α ⟫↓= (⟪ α ⟫↑ q))) (⟪ α ⟫↓= (⟪ α ⟫↑ q)) (ap (τ Q) (⟪ α ⟫⇅ q))) |in-ctx (λ x → ! (ap (τ Q) (⟪ α ⟫⇅ q)) ∙ x) ⟩
-                            ! (ap (τ Q) (⟪ α ⟫⇅ q)) ∙ (! (⟪ α ⟫↓= (⟪ α ⟫↑ q)) ∙ ⟪ α ⟫↓= (⟪ α ⟫↑ q)) ∙ ap (τ Q) (⟪ α ⟫⇅ q)
-                              =⟨ !-inv-l (⟪ α ⟫↓= (⟪ α ⟫↑ q)) |in-ctx (λ x → ! (ap (τ Q) (⟪ α ⟫⇅ q)) ∙ x ∙ ap (τ Q) (⟪ α ⟫⇅ q)) ⟩
-                            ! (ap (τ Q) (⟪ α ⟫⇅ q)) ∙ ap (τ Q) (⟪ α ⟫⇅ q)
-                              =⟨ !-inv-l (ap (τ Q) (⟪ α ⟫⇅ q)) ⟩
-                            idp ∎
+      po-path-is-id : po-path == idp
+      po-path-is-id = ! (⟪ α ⟫↓= (⟪ α ⟫↑ q) ∙ ap (τ Q) (⟪ α ⟫⇅ q)) ∙ ⟪ α ⟫↓= (⟪ α ⟫↑ q) ∙ ap (τ Q) (⟪ α ⟫⇅ q)
+                        =⟨ !-∙ (⟪ α ⟫↓= (⟪ α ⟫↑ q)) (ap (τ Q) (⟪ α ⟫⇅ q)) |in-ctx (λ x → x ∙ ⟪ α ⟫↓= (⟪ α ⟫↑ q) ∙ ap (τ Q) (⟪ α ⟫⇅ q)) ⟩
+                      (! (ap (τ Q) (⟪ α ⟫⇅ q)) ∙ ! (⟪ α ⟫↓= (⟪ α ⟫↑ q))) ∙ ⟪ α ⟫↓= (⟪ α ⟫↑ q) ∙ ap (τ Q) (⟪ α ⟫⇅ q)
+                        =⟨ ∙-assoc (! (ap (τ Q) (⟪ α ⟫⇅ q))) (! (⟪ α ⟫↓= (⟪ α ⟫↑ q))) (⟪ α ⟫↓= (⟪ α ⟫↑ q) ∙ ap (τ Q) (⟪ α ⟫⇅ q)) ⟩
+                      ! (ap (τ Q) (⟪ α ⟫⇅ q)) ∙ ! (⟪ α ⟫↓= (⟪ α ⟫↑ q)) ∙ ⟪ α ⟫↓= (⟪ α ⟫↑ q) ∙ ap (τ Q) (⟪ α ⟫⇅ q)
+                        =⟨ ! (∙-assoc (! (⟪ α ⟫↓= (⟪ α ⟫↑ q))) (⟪ α ⟫↓= (⟪ α ⟫↑ q)) (ap (τ Q) (⟪ α ⟫⇅ q))) |in-ctx (λ x → ! (ap (τ Q) (⟪ α ⟫⇅ q)) ∙ x) ⟩
+                      ! (ap (τ Q) (⟪ α ⟫⇅ q)) ∙ (! (⟪ α ⟫↓= (⟪ α ⟫↑ q)) ∙ ⟪ α ⟫↓= (⟪ α ⟫↑ q)) ∙ ap (τ Q) (⟪ α ⟫⇅ q)
+                        =⟨ !-inv-l (⟪ α ⟫↓= (⟪ α ⟫↑ q)) |in-ctx (λ x → ! (ap (τ Q) (⟪ α ⟫⇅ q)) ∙ x ∙ ap (τ Q) (⟪ α ⟫⇅ q)) ⟩
+                      ! (ap (τ Q) (⟪ α ⟫⇅ q)) ∙ ap (τ Q) (⟪ α ⟫⇅ q)
+                        =⟨ !-inv-l (ap (τ Q) (⟪ α ⟫⇅ q)) ⟩
+                      idp ∎
 
     ⟪_∣_⟫⇕-eqv : (α : ⟦ f ∣ g ⟧⟦ P ⇒ Q ⟧) (X : K → Type ℓ) {j : J} {c : γ P j} →
                  ⟦ P ⟧⟦ c ≺ X ∘ f ⟧ ≃ ⟦ Q ⟧⟦ ⟪ α ⟫ c ≺ X ⟧
@@ -250,8 +245,6 @@ module CartesianMorphism where
            {P : Poly I J} {Q : Poly K L} {R : Poly M N} where
 
     infixr 50 _▶_
-
-    -- τ-coh is h f τP == h τQ α-ρ == τR β-ρ α-ρ
 
     _▶_ : (α : ⟦ f ∣ g ⟧⟦ P ⇒ Q ⟧) (β : ⟦ h ∣ k ⟧⟦ Q ⇒ R ⟧) → ⟦ h ∘ f ∣ k ∘ g ⟧⟦ P ⇒ R ⟧
     γ-map (α ▶ β) = ⟪ β ⟫ ∘ ⟪ α ⟫
