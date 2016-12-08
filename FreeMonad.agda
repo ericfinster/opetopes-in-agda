@@ -1,4 +1,5 @@
 {-# OPTIONS --without-K #-}
+--{-# OPTIONS --show-implicit #-}
 
 open import HoTT
 
@@ -84,7 +85,7 @@ module FreeMonad where
     {-# TERMINATING #-}
     fr-μ-assoc-law : ⊚-assoc-r FrP FrP FrP ▶ (poly-id FrP ∥ fr-μ) ▶ fr-μ ≈ (fr-μ ∥ poly-id FrP) ▶ fr-μ
     fr-μ-assoc-law (leaf i , ψ) = lcl-eqv idp (λ p → idp) ADMIT
-    fr-μ-assoc-law (node {i} (c , φ) , ψ) = lcl-eqv γ-eq ρ-eq ADMIT where
+    fr-μ-assoc-law (node {i} (c , φ) , ψ) = lcl-eqv γ-eq ADMIT ADMIT where
       dec : ⟦ P ⟧⟦ c ≺ γ FrP ⟧
       dec p = ⟪ ⊚-assoc-r FrP FrP FrP ▶ (poly-id FrP ∥ fr-μ) ▶ fr-μ ⟫ (φ p , λ p′ → ψ (p , p′))
 
@@ -98,69 +99,100 @@ module FreeMonad where
              ⟪ (fr-μ ∥ poly-id FrP) ▶ fr-μ ⟫ (node (c , φ) , ψ)
       γ-eq =
         ⟪ ⊚-assoc-r FrP FrP FrP ▶ (poly-id FrP ∥ fr-μ) ▶ fr-μ ⟫ (node (c , φ) , ψ)
+          =⟨ idp ⟩
+        ⟪ (poly-id FrP ∥ fr-μ) ▶ fr-μ ⟫ ⊚-assoc-app
+          =⟨ idp ⟩
+        ⟪ fr-μ ⟫ (⟪ (poly-id FrP ∥ fr-μ) ⟫ ((node (c , φ) , fst ∘ ψ) , λ w → snd (ψ (fst w)) (snd w)))
           =⟨ λ= lemma |in-ctx (λ x → node (c , (λ p → ⟪ fr-μ ⟫ (⟪ fr-μ ⟫ (φ p , (λ p′ → fst (ψ (p , p′)))) , x p)))) ⟩
         node (c , (λ p → ⟪ fr-μ ⟫ (⟪ fr-μ ⟫ (φ p , (λ p′ → fst (ψ (p , p′))))
-                                            , ⟪ poly-id FrP ∣ fr-μ ⟫⇕ (λ x → snd (ψ (p , fst x)) (snd x)))))
+                                              , ⟪ poly-id FrP ∣ fr-μ ⟫⇕ (λ x → snd (ψ (p , fst x)) (snd x)))))
           =⟨ ↓-W-node-lcl-in IH ⟩
-        node (c , (λ p → ⟪ fr-μ ⟫ (φ p , (λ p′ → ⟪ fr-μ ⟫ (ψ (p , p′)))))) ∎ where
-          mul-dec : ⟦ P ⟧⟦ c ≺ W P ⟧
-          mul-dec p = ⟪ fr-μ ⟫ (φ p , (λ p' → fst (ψ (p , p'))))
+        node (c , (λ p → ⟪ fr-μ ⟫ (φ p , (λ p′ → ⟪ fr-μ ⟫ (ψ (p , p′))))))
+          =⟨ idp ⟩
+        ⟪ fr-μ ⟫ (⟪ (fr-μ ∥ poly-id FrP) ⟫ (node (c , φ) , ψ))
+          =⟨ idp ⟩
+        ⟪ (fr-μ ∥ poly-id FrP) ▶ fr-μ ⟫ (node (c , φ) , ψ) ∎ where
+          ⊚-assoc-app : ⟦ FrP ⊚ FrP ⟧ (W P) i
+          ⊚-assoc-app = ⟪ ⊚-assoc-r FrP FrP FrP ⟫ (node (c , φ) , ψ)
 
-          φ1 : ⟦_⟧⟦_≺_⟧ {I = I} {J = I} {!FrP ⊚ FrP!} {!!} {!!}
+          mul-dec : ⟦ P ⟧⟦ c ≺ W P ⟧
+          mul-dec p = ⟪ fr-μ ⟫ (φ p , (λ p₁ → fst (ψ (p , p₁))))
+
+          ψ-copy : ⟦ FrP ⟧⟦ node (c , φ) ≺ ⟦ FrP ⟧ (W P) ⟧
+          ψ-copy = ψ
+
+          φ1 : ⟦ FrP ⊚ FrP ⟧⟦ node (c , φ) , fst ∘ ψ ≺ W P ⟧
           φ1 w = snd (ψ (fst w)) (snd w)
 
-          φ2 : (p : ρ P c) → ⟦ {!!} ⟧⟦ {!!} ≺ {!!} ⟧
-          φ2 p w = snd (ψ (p , fst w)) (snd w)
-
-          m1 : (p : ρ P c) → ⟦ FrP ⟧⟦ mul-dec p ≺ W P ⟧
-          m1 p = λ p' → ⟪ poly-id FrP ∣ fr-μ ⟫⇕ φ1 (p , p')
-
-          m2 : (p : ρ P c) → ⟦ FrP ⟧⟦ mul-dec p ≺ W P ⟧
-          m2 p = ⟪ poly-id FrP ∣ fr-μ ⟫⇕ (φ2 p)
+          φ2-of : (p : ρ P c) → ⟦ FrP ⊚ FrP ⟧⟦ φ p , (λ p' → fst (ψ (p , p'))) ≺ W P ⟧
+          φ2-of p w = snd (ψ (p , fst w)) (snd w)
 
           goal : (p : ρ P c) (l : leafOf (mul-dec p))
-              → m1 p l == m2 p l
+              → ⟪ poly-id FrP ∣ fr-μ ⟫⇕ φ1 (p , l)
+                 == ⟪ poly-id FrP ∣ fr-μ ⟫⇕ (φ2-of p) l
           goal p l =
             ⟪ poly-id FrP ∣ fr-μ ⟫⇕ φ1 p,l
               =⟨ idp ⟩
-            --push fr-μ (W P) (W P) ⟪ poly-id FrP ⟫ (λ w → snd (ψ (fst w)) (snd w)) p,l
             push fr-μ (W P) (W P) ⟪ poly-id FrP ⟫ φ1 p,l
               =⟨ idp ⟩
-            transport (W P) (⟪ fr-μ ⟫↑= p,l) (φ1 (⟪ fr-μ ⟫↑ l))
-              =⟨ {!!} ⟩
-            -- transport (W P) (⟪ fr-μ ⟫↑= l) (snd (ψ (p , fst (⟪ fr-μ ⟫↑ l))) (snd (⟪ fr-μ ⟫↑ l)))
-            --  =⟨ idp ⟩
-            ⟪ poly-id FrP ∣ fr-μ ⟫⇕ (φ2 p) l ∎ where
-              p,l : leafOf (node (c , mul-dec))
+            transport (W P) p,l↑= (φ1 (⟪ fr-μ ⟫↑ p,l))
+              =⟨ trans-∙ (⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = (node (c , φ)) , (fst ∘ ψ)} p,l)) (ap (τ FrP) (⟪ fr-μ ⟫⇅ {c = node (c , φ) , fst ∘ ψ} p,l)) (φ1 (⟪ fr-μ ⟫↑ p,l)) ⟩
+            transport (W P)
+                      (ap (τ FrP) (⟪ fr-μ ⟫⇅ {c = node (c , φ) , fst ∘ ψ} p,l))
+                      (transport (W P) (⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = (node (c , φ)) , (fst ∘ ψ)} p,l)) (φ1 (⟪ fr-μ ⟫↑ p,l)))
+              =⟨ idp ⟩
+            transport (W P)
+                      (ap (τ FrP) (⟪ fr-μ ⟫⇅ {c = node (c , φ) , fst ∘ ψ} p,l))
+                      (transport (W P) (⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = (node (c , φ)) , (fst ∘ ψ)} p,l)) (φ2-of p (⟪ fr-μ ⟫↑ l)))
+              =⟨ {!fst ∘ ψ !} ⟩
+            transport (W P) (ap (τ FrP) (⟪ fr-μ ⟫⇅ {c = φ p , (λ p' → fst (ψ (p , p')))} l)) (transport (W P) (⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = φ p , (λ p' → fst (ψ (p , p')))} l)) (φ2-of p (⟪ fr-μ ⟫↑ l)))
+              =⟨ ! (trans-∙ (⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = φ p , (λ p' → fst (ψ (p , p')))} l)) (ap (τ FrP) (⟪ fr-μ ⟫⇅ {c = φ p , (λ p' → fst (ψ (p , p')))} l)) (φ2-of p (⟪ fr-μ ⟫↑ l))) ⟩
+            transport (W P) l↑= (φ2-of p (⟪ fr-μ ⟫↑ l))
+              =⟨ idp ⟩
+            push fr-μ (W P) (W P) ⟪ poly-id FrP ⟫ (φ2-of p) l
+              =⟨ idp ⟩
+            ⟪ poly-id FrP ∣ fr-μ ⟫⇕ (φ2-of p) l ∎ where
+              p,l : leafOf (⟪ fr-μ ⟫ (node (c , φ) , fst ∘ ψ))
               p,l = p , l
 
-              implicit-c : γ (FrP ⊚ FrP) i
-              implicit-c = node {!!} , (λ x → {!!})
+              p,l↑= : leafType (snd (⟪ fr-μ ⟫↑ {c = node (c , φ) , fst ∘ ψ} p,l))
+                      == leafType l
+              p,l↑= = ⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = (node (c , φ)) , (fst ∘ ψ)} p,l)
+                      ∙ ap (τ FrP) (⟪ fr-μ ⟫⇅ {c = node (c , φ) , fst ∘ ψ} p,l)
 
-              p,l-coh : leafType {i = i} (⟪ fr-μ ⟫↑ {j = i} {c = implicit-c} p,l) == leafType p,l
-              p,l-coh = ⟪ fr-μ ⟫↑= p,l
-              -- p,l-coh = ⟪ fr-μ ⟫↑= {j = i} {c = node (c , φ) , fst ∘ ψ} p,l
+              l↑= : leafType (snd (⟪ fr-μ ⟫↑ {c = φ p , (λ p' → fst (ψ (p , p')))} l)) == leafType l
+              l↑= = ⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = φ p , (λ p' → fst (ψ (p , p')))} l)
+                    ∙ ap (τ FrP) (⟪ fr-μ ⟫⇅ {c = φ p , (λ p' → fst (ψ (p , p')))} l)
 
---[ IGNORE:
--- ⟪_⟫↑= : (q : ρ Q (⟪_⟫ c)) → f (τ P (⟪_⟫↑ q)) == τ Q q
--- ρ (P ⊚ Q) (c , φ) = Σ (ρ Q c) (ρ P ∘ φ)
--- p,l should be:
---   Σ (ρ P c) (λ p₁ → leafOf (⟪ fr-μ ⟫ (φ p₁ , (λ p₂ → fst (ψ (p₁ , p₂))))))
--- leafOf (node (c , φ)) = Σ (ρ P c) (λ p → leafOf (φ p))
---  =⟨ trans-∙ (⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ p,l)) (ap (τ FrP) (⟪ fr-μ ⟫⇅ p,l)) (snd (ψ (⟪ fr-μ ⟫↑ (p , l))) (snd (⟪ fr-μ ⟫↑ p,l))) ⟩
---transport (W P) (ap (τ P) (⟪ fr-μ ⟫⇅ l)) (transport (W P) (⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ l)) (snd (ψ (p , (fst (⟪ fr-μ ⟫↑ l)))) (snd (⟪ fr-μ ⟫↑ l))))
---  =⟨ trans-∙ (⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ l)) (ap (τ P) (⟪ fr-μ ⟫⇅ l) ) ((snd (ψ (p , (fst (⟪ fr-μ ⟫↑ l)))) (snd (⟪ fr-μ ⟫↑ l)))) ⟩
---transport (W P) ((⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ l)) ∙ ap (τ P) (⟪ fr-μ ⟫⇅ l)) (snd (ψ (p , (fst (⟪ fr-μ ⟫↑ l)))) (snd (⟪ fr-μ ⟫↑ l)))
---]
+              isthistrue : (transport (W P) (⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = (node (c , φ)) , (fst ∘ ψ)} p,l)) (φ2-of p (⟪ fr-μ ⟫↑ l)))
+                           == (transport (W P) (⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = φ p , (λ p' → fst (ψ (p , p')))} l)) (φ2-of p (⟪ fr-μ ⟫↑ l)))
+              isthistrue = {!!}
 
-          lemma : (p : ρ P c) → m1 p == m2 p
+              isthistrue' : ⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = (node (c , φ)) , (fst ∘ ψ)} p,l)
+                         == ⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = φ p , (λ p' → fst (ψ (p , p')))} l)
+              isthistrue' =
+                ⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = (node (c , φ)) , (fst ∘ ψ)} p,l)
+                  =⟨ ! (⟪ fr-μ ⟫■ {!idp!}) ⟩
+                {!!}
+                  =⟨ {!!} ⟩
+                ⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = φ p , (λ p' → fst (ψ (p , p')))} l) ∎ where
+                  p0=p1 : (⟪ fr-μ ⟫↑ {c = (node (c , φ)) , (fst ∘ ψ)} p,l)
+                          == (⟪ fr-μ ⟫↑ {c = φ p , (λ p' → fst (ψ (p , p')))} l) [ {!!} ↓ {!idp!} ]
+                  p0=p1 = {!!}
+
+              isthistrue'' : (ap (τ FrP) (⟪ fr-μ ⟫⇅ {c = node (c , φ) , fst ∘ ψ} p,l)) == (ap (τ FrP) (⟪ fr-μ ⟫⇅ {c = φ p , (λ p' → fst (ψ (p , p')))} l))
+              isthistrue'' = {!idp!}
+
+          lemma : (p : ρ P c)
+               → (λ p' → ⟪ poly-id FrP ∣ fr-μ ⟫⇕ φ1 (p , p'))
+                  == ⟪ poly-id FrP ∣ fr-μ ⟫⇕ (φ2-of p)
           lemma p = λ= (goal p)
 
       ρ-eq : (p : Σ (leafOf (node (c , φ))) ((λ l → Σ (leafOf (fst l)) (leafOf ∘ snd l)) ∘ ψ))
           → ⟪ ⊚-assoc-r FrP FrP FrP ▶ (poly-id FrP ∥ fr-μ) ▶ fr-μ ⟫↓ p
              == ⟪ (fr-μ ∥ poly-id FrP) ▶ fr-μ ⟫↓ p
              [ leafOf ↓ γ-eq ]
-      ρ-eq p = ADMIT where
+      ρ-eq p = {!!}
 
     --FrM : PolyMonad I
     --MP FrM = FrP
