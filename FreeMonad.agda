@@ -86,14 +86,17 @@ module FreeMonad where
     fr-μ-assoc-law : ⊚-assoc-r FrP FrP FrP ▶ (poly-id FrP ∥ fr-μ) ▶ fr-μ ≈ (fr-μ ∥ poly-id FrP) ▶ fr-μ
     fr-μ-assoc-law (leaf i , ψ) = lcl-eqv idp (λ p → idp) ADMIT
     fr-μ-assoc-law (node {i} (c , φ) , ψ) = lcl-eqv γ-eq ADMIT ADMIT where
+      --c1 : (p : ρ P c) → ⟦ FrP ⟧ {!W {I = I}!} (τ P p)
+      --c1 p = φ p , λ p′ → ψ (p , p′)
+
       dec : ⟦ P ⟧⟦ c ≺ γ FrP ⟧
-      dec p = ⟪ ⊚-assoc-r FrP FrP FrP ▶ (poly-id FrP ∥ fr-μ) ▶ fr-μ ⟫ (φ p , λ p′ → ψ (p , p′))
+      dec p = ⟪ ⊚-assoc-r FrP FrP FrP ▶ (poly-id FrP ∥ fr-μ) ▶ fr-μ ⟫ (φ p , λ p' → ψ (p , p'))
 
       dec′ : ⟦ P ⟧⟦ c ≺ γ FrP ⟧
-      dec′ p = ⟪ (fr-μ ∥ poly-id FrP) ▶ fr-μ ⟫ (φ p , λ p′ → ψ (p , p′))
+      dec′ p = ⟪ (fr-μ ∥ poly-id FrP) ▶ fr-μ ⟫ (φ p , λ p' → ψ (p , p'))
 
       IH : (p : ρ P c) → dec p == dec′ p
-      IH p = γ≈ (fr-μ-assoc-law (φ p , λ p′ → ψ (p , p′)))
+      IH p = γ≈ (fr-μ-assoc-law (φ p , λ p' → ψ (p , p')))
 
       γ-eq : ⟪ ⊚-assoc-r FrP FrP FrP ▶ (poly-id FrP ∥ fr-μ) ▶ fr-μ ⟫ (node (c , φ) , ψ) ==
              ⟪ (fr-μ ∥ poly-id FrP) ▶ fr-μ ⟫ (node (c , φ) , ψ)
@@ -102,7 +105,7 @@ module FreeMonad where
           =⟨ idp ⟩
         ⟪ (poly-id FrP ∥ fr-μ) ▶ fr-μ ⟫ ⊚-assoc-app
           =⟨ idp ⟩
-        ⟪ fr-μ ⟫ (⟪ (poly-id FrP ∥ fr-μ) ⟫ ((node (c , φ) , fst ∘ ψ) , λ w → snd (ψ (fst w)) (snd w)))
+        ⟪ fr-μ ⟫ (⟪ (poly-id FrP ∥ fr-μ) ⟫ ((c0) , λ w → snd (ψ (fst w)) (snd w)))
           =⟨ λ= lemma |in-ctx (λ x → node (c , (λ p → ⟪ fr-μ ⟫ (⟪ fr-μ ⟫ (φ p , (λ p′ → fst (ψ (p , p′)))) , x p)))) ⟩
         node (c , (λ p → ⟪ fr-μ ⟫ (⟪ fr-μ ⟫ (φ p , (λ p′ → fst (ψ (p , p′))))
                                               , ⟪ poly-id FrP ∣ fr-μ ⟫⇕ (λ x → snd (ψ (p , fst x)) (snd x)))))
@@ -115,16 +118,22 @@ module FreeMonad where
           ⊚-assoc-app : ⟦ FrP ⊚ FrP ⟧ (W P) i
           ⊚-assoc-app = ⟪ ⊚-assoc-r FrP FrP FrP ⟫ (node (c , φ) , ψ)
 
+          c0 : ⟦ FrP ⟧ (W P) i
+          c0 = node (c , φ) , fst ∘ ψ
+
+          c1 : (p : ρ P c) → ⟦ FrP ⟧ (W P) (τ P p)
+          c1 p = φ p , λ p' → fst (ψ (p , p'))
+
           mul-dec : ⟦ P ⟧⟦ c ≺ W P ⟧
-          mul-dec p = ⟪ fr-μ ⟫ (φ p , (λ p₁ → fst (ψ (p , p₁))))
+          mul-dec p = ⟪ fr-μ ⟫ (c1 p)
 
           ψ-copy : ⟦ FrP ⟧⟦ node (c , φ) ≺ ⟦ FrP ⟧ (W P) ⟧
           ψ-copy = ψ
 
-          φ1 : ⟦ FrP ⊚ FrP ⟧⟦ node (c , φ) , fst ∘ ψ ≺ W P ⟧
+          φ1 : ⟦ FrP ⊚ FrP ⟧⟦ c0 ≺ W P ⟧
           φ1 w = snd (ψ (fst w)) (snd w)
 
-          φ2-of : (p : ρ P c) → ⟦ FrP ⊚ FrP ⟧⟦ φ p , (λ p' → fst (ψ (p , p'))) ≺ W P ⟧
+          φ2-of : (p : ρ P c) → ⟦ FrP ⊚ FrP ⟧⟦ c1 p ≺ W P ⟧
           φ2-of p w = snd (ψ (p , fst w)) (snd w)
 
           goal : (p : ρ P c) (l : leafOf (mul-dec p))
@@ -136,51 +145,51 @@ module FreeMonad where
             push fr-μ (W P) (W P) ⟪ poly-id FrP ⟫ φ1 p,l
               =⟨ idp ⟩
             transport (W P) p,l↑= (φ1 (⟪ fr-μ ⟫↑ p,l))
-              =⟨ trans-∙ (⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = (node (c , φ)) , (fst ∘ ψ)} p,l)) (ap (τ FrP) (⟪ fr-μ ⟫⇅ {c = node (c , φ) , fst ∘ ψ} p,l)) (φ1 (⟪ fr-μ ⟫↑ p,l)) ⟩
+              =⟨ trans-∙ (⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = c0} p,l)) (ap (τ FrP) (⟪ fr-μ ⟫⇅ {c = c0} p,l)) (φ1 (⟪ fr-μ ⟫↑ p,l)) ⟩
             transport (W P)
-                      (ap (τ FrP) (⟪ fr-μ ⟫⇅ {c = node (c , φ) , fst ∘ ψ} p,l))
-                      (transport (W P) (⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = (node (c , φ)) , (fst ∘ ψ)} p,l)) (φ1 (⟪ fr-μ ⟫↑ p,l)))
+                      (ap (τ FrP) (⟪ fr-μ ⟫⇅ {c = c0} p,l))
+                      (transport (W P) (⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = c0} p,l)) (φ1 (⟪ fr-μ ⟫↑ p,l)))
               =⟨ idp ⟩
             transport (W P)
-                      (ap (τ FrP) (⟪ fr-μ ⟫⇅ {c = node (c , φ) , fst ∘ ψ} p,l))
-                      (transport (W P) (⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = (node (c , φ)) , (fst ∘ ψ)} p,l)) (φ2-of p (⟪ fr-μ ⟫↑ l)))
+                      (ap (τ FrP) (⟪ fr-μ ⟫⇅ {c = c0} p,l))
+                      (transport (W P) (⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = c0} p,l)) (φ2-of p (⟪ fr-μ ⟫↑ l)))
               =⟨ {!fst ∘ ψ !} ⟩
-            transport (W P) (ap (τ FrP) (⟪ fr-μ ⟫⇅ {c = φ p , (λ p' → fst (ψ (p , p')))} l)) (transport (W P) (⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = φ p , (λ p' → fst (ψ (p , p')))} l)) (φ2-of p (⟪ fr-μ ⟫↑ l)))
-              =⟨ ! (trans-∙ (⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = φ p , (λ p' → fst (ψ (p , p')))} l)) (ap (τ FrP) (⟪ fr-μ ⟫⇅ {c = φ p , (λ p' → fst (ψ (p , p')))} l)) (φ2-of p (⟪ fr-μ ⟫↑ l))) ⟩
+            transport (W P) (ap (τ FrP) (⟪ fr-μ ⟫⇅ {c = c1 p} l)) (transport (W P) (⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = c1 p} l)) (φ2-of p (⟪ fr-μ ⟫↑ l)))
+              =⟨ ! (trans-∙ (⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = c1 p} l)) (ap (τ FrP) (⟪ fr-μ ⟫⇅ {c = c1 p} l)) (φ2-of p (⟪ fr-μ ⟫↑ l))) ⟩
             transport (W P) l↑= (φ2-of p (⟪ fr-μ ⟫↑ l))
               =⟨ idp ⟩
             push fr-μ (W P) (W P) ⟪ poly-id FrP ⟫ (φ2-of p) l
               =⟨ idp ⟩
             ⟪ poly-id FrP ∣ fr-μ ⟫⇕ (φ2-of p) l ∎ where
-              p,l : leafOf (⟪ fr-μ ⟫ (node (c , φ) , fst ∘ ψ))
+              p,l : leafOf (⟪ fr-μ ⟫ (c0))
               p,l = p , l
 
-              p,l↑= : leafType (snd (⟪ fr-μ ⟫↑ {c = node (c , φ) , fst ∘ ψ} p,l))
+              p,l↑= : leafType (snd (⟪ fr-μ ⟫↑ {c = c0} p,l))
                       == leafType l
-              p,l↑= = ⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = (node (c , φ)) , (fst ∘ ψ)} p,l)
-                      ∙ ap (τ FrP) (⟪ fr-μ ⟫⇅ {c = node (c , φ) , fst ∘ ψ} p,l)
+              p,l↑= = ⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = c0} p,l)
+                      ∙ ap (τ FrP) (⟪ fr-μ ⟫⇅ {c = c0} p,l)
 
-              l↑= : leafType (snd (⟪ fr-μ ⟫↑ {c = φ p , (λ p' → fst (ψ (p , p')))} l)) == leafType l
-              l↑= = ⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = φ p , (λ p' → fst (ψ (p , p')))} l)
-                    ∙ ap (τ FrP) (⟪ fr-μ ⟫⇅ {c = φ p , (λ p' → fst (ψ (p , p')))} l)
+              l↑= : leafType (snd (⟪ fr-μ ⟫↑ {c = c1 p} l)) == leafType l
+              l↑= = ⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = c1 p} l)
+                    ∙ ap (τ FrP) (⟪ fr-μ ⟫⇅ {c = c1 p} l)
 
-              isthistrue : (transport (W P) (⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = (node (c , φ)) , (fst ∘ ψ)} p,l)) (φ2-of p (⟪ fr-μ ⟫↑ l)))
-                           == (transport (W P) (⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = φ p , (λ p' → fst (ψ (p , p')))} l)) (φ2-of p (⟪ fr-μ ⟫↑ l)))
+              isthistrue : (transport (W P) (⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = c0} p,l)) (φ2-of p (⟪ fr-μ ⟫↑ l)))
+                           == (transport (W P) (⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = c1 p} l)) (φ2-of p (⟪ fr-μ ⟫↑ l)))
               isthistrue = {!!}
 
-              isthistrue' : ⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = (node (c , φ)) , (fst ∘ ψ)} p,l)
-                         == ⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = φ p , (λ p' → fst (ψ (p , p')))} l)
+              isthistrue' : ⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = c0} p,l)
+                         == ⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = c1 p} l)
               isthistrue' =
-                ⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = (node (c , φ)) , (fst ∘ ψ)} p,l)
+                ⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = c0} p,l)
                   =⟨ ! (⟪ fr-μ ⟫■ {!idp!}) ⟩
                 {!!}
                   =⟨ {!!} ⟩
-                ⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = φ p , (λ p' → fst (ψ (p , p')))} l) ∎ where
-                  p0=p1 : (⟪ fr-μ ⟫↑ {c = (node (c , φ)) , (fst ∘ ψ)} p,l)
-                          == (⟪ fr-μ ⟫↑ {c = φ p , (λ p' → fst (ψ (p , p')))} l) [ {!!} ↓ {!idp!} ]
+                ⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = c1 p} l) ∎ where
+                  p0=p1 : (⟪ fr-μ ⟫↑ {c = c0} p,l)
+                          == (⟪ fr-μ ⟫↑ {c = c1 p} l) [ {!!} ↓ {!idp!} ]
                   p0=p1 = {!!}
 
-              isthistrue'' : (ap (τ FrP) (⟪ fr-μ ⟫⇅ {c = node (c , φ) , fst ∘ ψ} p,l)) == (ap (τ FrP) (⟪ fr-μ ⟫⇅ {c = φ p , (λ p' → fst (ψ (p , p')))} l))
+              isthistrue'' : (ap (τ FrP) (⟪ fr-μ ⟫⇅ {c = c0} p,l)) == (ap (τ FrP) (⟪ fr-μ ⟫⇅ {c = c1 p} l))
               isthistrue'' = {!idp!}
 
           lemma : (p : ρ P c)
@@ -192,7 +201,7 @@ module FreeMonad where
           → ⟪ ⊚-assoc-r FrP FrP FrP ▶ (poly-id FrP ∥ fr-μ) ▶ fr-μ ⟫↓ p
              == ⟪ (fr-μ ∥ poly-id FrP) ▶ fr-μ ⟫↓ p
              [ leafOf ↓ γ-eq ]
-      ρ-eq p = {!!}
+      ρ-eq p = ADMIT
 
     --FrM : PolyMonad I
     --MP FrM = FrP
