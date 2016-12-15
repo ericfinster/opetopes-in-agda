@@ -174,11 +174,48 @@ module FreeMonad where
               l↑= = ⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = c1 p} l)
                     ∙ ap (τ FrP) (⟪ fr-μ ⟫⇅ {c = c1 p} l)
 
+              remark : φ1 (⟪ fr-μ ⟫↑ p,l) == φ2-of p (⟪ fr-μ ⟫↑ l)
+              remark = idp
+              
               wow : leafType (snd (⟪ fr-μ ⟫↑ {c = c0} p,l)) == leafType (snd (⟪ fr-μ ⟫↑ {c = c1 p} l)) 
               wow = idp
 
+              general₀ : τ (FrP ⊚ FrP) (⟪ fr-μ ⟫↑ {c = c0} p,l) == τ FrP p,l
+              general₀ = ⟪ fr-μ ⟫↑= {c = c0} p,l
+
+              general₁ : τ (FrP ⊚ FrP) (⟪ fr-μ ⟫↑ {c = c1 p} l) == τ FrP l
+              general₁ = ⟪ fr-μ ⟫↑= {c = c1 p} l
+
+              end-pt₀ : ρ (FrP ⊚ FrP) c0 -- Σ (Σ (ρ P c) (λ p₁ → leafOf (φ p₁))) ((λ {a} → leafOf) ∘ snd c0)
+              end-pt₀ =  (⟪ fr-μ ⟫↑ {c = c0} p,l) 
+
+              end-pt₁ : ρ (FrP ⊚ FrP) (c1 p)  -- Σ (leafOf (fst (c1 p))) ((λ {a} → leafOf) ∘ snd (c1 p))
+              end-pt₁ =  (⟪ fr-μ ⟫↑ {c = c1 p} l) 
+
+              end-pt-test : ⟪ fr-μ ⟫↑ {c = c0} p,l == (p , fst (⟪ fr-μ ⟫↑ {c = c1 p} l)) , snd (⟪ fr-μ ⟫↑ {c = c1 p} l)
+              end-pt-test = idp
+
+              half-way₀ : leafType (snd (⟪ fr-μ ⟫↑ {c = c0} p,l)) == leafType (snd (⟪ fr-μ ⟫↓ (⟪ fr-μ ⟫↑ {c = c0} p,l)))
+              half-way₀ = ⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = c0} p,l)
+
+              half-way₁ : leafType (snd (⟪ fr-μ ⟫↑ {c = c1 p} l)) == leafType (⟪ fr-μ ⟫↓ (⟪ fr-μ ⟫↑ {c = c1 p} l))
+              half-way₁ = ⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = c1 p} l) 
+
+              check : half-way₀ == half-way₁
+              check = {!!}
+
+              second-half₀ : leafType (snd (⟪ fr-μ ⟫↓ (⟪ fr-μ ⟫↑ {c = c0} p,l))) == leafType (snd p,l)
+              second-half₀ = ap (τ FrP) (⟪ fr-μ ⟫⇅ {c = c0} p,l)
+
+              second-half₁ : leafType (⟪ fr-μ ⟫↓ (⟪ fr-μ ⟫↑ {c = c1 p} l)) == leafType l
+              second-half₁ =  ap (τ FrP) (⟪ fr-μ ⟫⇅ {c = c1 p} l) 
+
+              second-check : second-half₀ == second-half₁
+              second-check = {! !}
+
               commutative-square : p,l↑= == l↑=
-              commutative-square = {!⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = c1 p} l)!}
+              commutative-square = {!⟪ fr-μ ⟫↓= (⟪ fr-μ ⟫↑ {c = c0} p,l)!}
+
 
               -- ⟪_⟫■ : {p₀ p₁ : ρ P c} (q : p₀ == p₁) →
               --        ! (ap (f ∘ τ P) q) ∙ ⟪_⟫↓= p₀ ∙ ap (τ Q) (ap (⟪_⟫↓) q) == ⟪_⟫↓= p₁
