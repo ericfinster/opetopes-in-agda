@@ -1,0 +1,314 @@
+%
+%  opetopes-in-agda.tex - Opetopes in Agda
+%
+
+\documentclass{article}
+
+\usepackage{stmaryrd}
+\usepackage{tikz-cd}
+\usepackage{graphicx}
+\usepackage{amsmath}
+
+\graphicspath{ {./imgs/} }
+
+\usepackage{ucs}
+\usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+
+\usepackage{latex/agda}
+
+\usepackage{catchfilebetweentags}
+\newcommand{\snippet}[1]{\ExecuteMetaData[latex/opetopes.tex]{#1}}
+
+\newcommand{\pbmark}{\ar[dr, phantom, "\ulcorner" very near start, shift right=1ex]}
+\newcommand{\polyarrowup}[2]{\arrow{r}[name=#1,inner sep=5pt,below]{}[description, inner sep=0pt]{|}[inner sep=5pt]{#2}}
+\newcommand{\polyarrowdn}[2]{\arrow{r}[name=#1,inner sep=5pt]{}[description, inner sep=0pt]{|}[inner sep=5pt, below]{#2}}
+
+\DeclareUnicodeCharacter{9654}{$\blacktriangleright$}
+\DeclareUnicodeCharacter{8669}{$\rightsquigarrow$}
+\DeclareUnicodeCharacter{9424}{@}
+
+\newcommand\textPsi{$\Psi$}
+\newcommand\textXi{$\Xi$}
+\newcommand\textxi{$\xi$}
+\newcommand\textDelta{$\Delta$}
+\newcommand\textGamma{$\Gamma$}
+\newcommand\textsigma{$\sigma$}
+\newcommand\textSigma{$\Sigma$}
+\newcommand\textPi{$\Pi$}
+\newcommand\textrho{$\rho$}
+\newcommand\textphi{$\varphi$}
+\newcommand\texttau{$\tau$}
+\newcommand\texteta{$\eta$}
+\newcommand\textalpha{$\alpha$}
+\newcommand\textbeta{$\beta$}
+\newcommand\textepsilon{$\varepsilon$}
+\newcommand\textkappa{$\kappa$}
+\newcommand\textOmega{$\Omega$}
+\newcommand\textmho{$\mho$}
+\newcommand\textgamma{$\gamma$}
+\newcommand\textlambda{$\lambda$}
+\newcommand\textpi{$\pi$}
+\newcommand\textmu{$\mu$}
+\newcommand\texttheta{$\theta$}
+\newcommand\textdelta{$\delta$}
+
+\newcommand{\Set}{\mathcal{S}et}
+\newcommand{\Poly}{\mathrm{Poly}}
+\newcommand{\ext}[1]{\llbracket #1 \rrbracket}
+
+\title{Opetopes in Agda}
+\author{Eric Finster}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+\label{sec:introduction}
+
+The \emph{opetopes} are a family of polytopes introduced by Baez and
+Dolan in \cite{BD97} in order to give a definition of weak
+$n$-dimensional category.  These shapes are intimately related to
+polynomial functors, a common mathematical tool used in the semantics
+of inductive types for functional programming languages.
+
+These notes contain a sketch of the definitions translated into the
+language of Martin-L\"{o}f type theory, as implemented by the
+programming language Agda.
+
+\section{Polynomials}
+\label{sec:polynomials}
+
+Polynomial functors are an extremely important tool in computer science
+for describing the semantics of inductively defined datatypes.  An overview
+of the theoretical aspects can be found in \cite{GK13}.  For a presentation
+directed more to the computer scientist, see \cite{AGHMM15}.
+
+When speaking semantically, we will employ the representation of
+indexed polynomials described in \cite{GK13}.  That is, a polynomial
+is a diagram of sets of the following shape:
+
+\[
+\begin{tikzcd}
+  & E \ar[dl, "\hat\tau"'] \ar[r, "\hat\rho"] & B \ar[dr, "\hat\gamma"] \\
+  I & & & J
+\end{tikzcd}
+\]
+
+\noindent The elements of $B$ are will be called \emph{constructors}, the
+elements of $E$ \emph{places} and the elements of the two sets $I$ and
+$J$ \emph{indices}.  
+
+When translating this data into the language of type theory, it is often
+represent maps between types as dependent types.  Under this translation,
+the definition in Agda becomes
+
+\snippet{polynomials}
+
+\noindent and we recover the sets $B$ and $E$ by applying $\Sigma$.
+That is,
+
+\snippet{eb}
+
+\noindent and under this definition, the maps $\hat\gamma$ and $\hat\rho$ become
+simply the first projections from these sigma types.
+
+Hence, for each $i:I$, the type $\gamma \, i$ is the type of constructors
+of output type $i$. In this definition, γ is the type of
+\emph{constructors}, ρ is the type of \emph{places} and τ assigns a
+\emph{type} to each place.
+
+It is useful to develop a kind of graphical notation for depicting
+the elements of a polynomial.  So let us suppose we have some
+$j : J$.  An element $c : \gamma \, j$ is a constructor whose
+\emph{output type} is our given $j$.  Applying out dependent type
+$\rho$ to this element, we have a set, whose elements are depicted
+$p_1, p_2$ and $p_3$ in the diagram below.  Finally, the function
+$\tau$ assigns to each of these elements an \emph{input type}, which
+is an element of $I$.
+
+\begin{center}
+  \includegraphics[scale=0.75]{corolla}    
+\end{center}
+
+As shown in the diagram, then, we can picture a constructor $c$ of
+type $j$ as a \emph{corolla}, that is, as a tree with a single
+internal node corresponding labelled by $c$ and whose output edge is
+labeled by the element $j$ and inputs by the typing funtion $\tau$
+applied to each of the places.
+
+The concept of a decoration is important.  It can be used to define
+a functor corresponding to each polynomial, its \emph{extension}, which
+can be defined as follows:
+
+\snippet{extension}
+
+An extremely important operation on polynomials is that they \emph{compose}.
+The definition is given as follows:
+
+\snippet{polycomp}
+
+\subsection{W-Types}
+\label{sec:w-types}
+
+As we have seen, each polynomial $P$ induces a functor
+$\ext{P} : \Set^I \to \Set^J$.  When $I=J$, so that the $\ext{P}$ is
+an endomorphism of the category $\Set^I$, this functor in fact has an
+initial fixed point, the \emph{W-type} corresponding to $P$, which is
+defined as follows.
+
+\snippet{wtypes}
+
+The elements of the type $W P$ are the \emph{$P$-trees}, as
+illustrated by the following diagram.
+
+\subsection{Cartesian Morphisms}
+
+There are various notions of morphisms between polynomials
+that are in use in the literature.  Here we will be interested
+in the \emph{cartesian morphisms}.  These are given by diagrams
+of the following shape:
+
+\[
+\begin{tikzcd}
+  I \ar[d, "f"'] & E \ar[l] \ar[r] \ar[d] \pbmark & B \ar[r] \ar[d] & J \ar[d, "g"] \\
+  K & F \ar[l] \ar[r] & C \ar[r] & L
+\end{tikzcd}
+\]
+
+The designation cartesian comes from the requirement that the middle
+square is a pullback, as indicated in the diagram.  Translated into
+Agda, this definition becomes:
+
+\snippet{cartmorph}
+
+\noindent Notice that the cartesian condition is expressed by the
+requirement that the map on places $\rho$-map is in fact an equivalence.
+
+In order to understand the algebra of cartesian morphisms and the
+definitions which follow, it is helpful to elucidate the structure
+enjoyed by the collection of polynomial functors and their interaction
+with maps between types.  The structure we are interested in is that
+of a \emph{framed bicategory}, whose basic theory is outline in \cite{S07}.
+
+The basic idea is that we can think of a polynomial $P : \Poly I J$ as
+a kind of generalized map from $I$ to $J$.  Moreover, for polynomials
+$P$ and $Q$, the composition $P \odot Q$ givens these generalized maps
+the structure of a category.  Let us therefore denote a polynomial $P$
+as a decorated arrow as follows
+
+\[
+\begin{tikzcd}
+  I \arrow{r}[description, inner sep=0pt]{|}[inner sep=5pt]{P} & J 
+\end{tikzcd}
+\]
+
+\noindent in order to distinguish it from an ordinary map of types
+$f : I \to J$.
+
+Notice that our cartesian morphisms use both of these two kinds of
+maps between types.  But we can naturally think of them, then, as
+2-cells filling a square as follows:
+
+\[
+\begin{tikzcd}
+  I \polyarrowup{U}{P} \ar[d, "f"'] & J \ar[d, "g"] \\
+  K \polyarrowdn{D}{Q} & L
+  \arrow[Rightarrow, from=U, to=D]{}[inner sep=5pt]{\alpha}
+\end{tikzcd}
+\]
+
+\noindent and our notation is meant to reflect this geometry.  Since
+cartesian morphisms are naturally regarded as two cells, our geometric
+intuition would suggest that there are two ways of composing them.
+This is indeed the case.  The ``vertical composition'' takes the following
+form:
+
+\[
+\begin{tikzcd}[row sep=large]
+  I \arrow{r}[name=U,inner sep=7pt,below]{}[description, inner sep=0pt]{|}[inner sep=5pt]{P} \ar[d, "f"'] & J \ar[d, "g"] \\
+  K \arrow{r}[name=D,inner sep=7pt]{}[name=A,inner sep=8pt,below]{}[description, inner sep=0pt]{|}[inner sep=5pt, below]{Q} \ar[d, "h"']
+  & L \arrow[Rightarrow, from=U, to=D]{}[inner sep=5pt]{\alpha} \ar[d, "k"] \\
+  M \arrow{r}[name=B,inner sep=6pt]{}[description, inner sep=0pt]{|}[inner sep=5pt, below]{R}
+  & N \arrow[Rightarrow, from=A, to=B]{}[inner sep=5pt]{\beta}
+\end{tikzcd} \hspace{1cm} \Longmapsto \hspace{1cm}
+\begin{tikzcd}[column sep=large]
+  I \polyarrowup{U}{P} \ar[d, "h \circ f"'] & J \ar[d, "k \circ g"] \\
+  K \polyarrowdn{D}{Q} & L
+  \arrow[Rightarrow, from=U, to=D]{}[inner sep=5pt]{\alpha \blacktriangleright \beta}
+\end{tikzcd}
+\]
+
+\noindent and can be defined in Agda as
+
+\snippet{vertcomp}
+
+The horizontal composition, on the other hand, will use the
+composition of polynomials defined above, and is represented
+geometrically as follows:
+
+\[
+\begin{tikzcd}
+  I \polyarrowup{U}{P} \ar[d, "f"'] & J \polyarrowup{X}{R} \ar[d, "g"] & K \ar[d, "h"] \\
+  L \polyarrowdn{D}{Q} & M \polyarrowdn{Y}{S} & N 
+  \arrow[Rightarrow, from=U, to=D]{}[inner sep=5pt]{\alpha}
+  \arrow[Rightarrow, from=X, to=Y]{}[pos=1.2,inner sep=5pt]{\beta}
+\end{tikzcd} \hspace{1cm} \Longmapsto \hspace{1cm}
+\begin{tikzcd}[column sep=large]
+  I \polyarrowup{U}{P \odot R} \ar[d, "f"'] & J \ar[d, "h"] \\
+  K \polyarrowdn{D}{Q \odot S} & L
+  \arrow[Rightarrow, from=U, to=D]{}[inner sep=5pt]{\alpha || \beta}
+\end{tikzcd}
+\]
+
+\noindent However, since it's definition requires the proof of a certain
+extra coherence, we elide it for now, contenting ourselves to record the
+type so that the reader can check how it corresponds to the double category
+diagram above:
+
+\snippet{horzcomp}
+
+Next, we will need to spell out what it means for two cartesian morphisms
+to be equal.  This is given by the following definition.
+
+\snippet{carteq}
+
+Some examples of cartesian morphisms which will be useful in what follows
+are related to the unit and associative laws for composition of polynomials.
+For example, as follows
+
+\snippet{polymisc}
+
+\section{Polynomial Monads}
+\label{sec:polynomial-monads}
+
+With the calculus of cartesian morphisms described above, we can now
+give the definition of a polynomial monad.
+
+\snippet{polymnds}
+
+\section{The Slice Construction}
+\label{sec:slice-construction}
+
+We now present the Baez-Dolan slice construction. 
+
+\snippet{slice}
+
+The main thing to notice is how the indexing uses the multiplication
+of the original monad.
+
+We can also define the places and typing function for the slice
+as follows
+
+\snippet{sliceextra}
+
+\bibliographystyle{plain}
+\bibliography{opetopes-in-agda}
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:
